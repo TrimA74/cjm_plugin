@@ -1,0 +1,25 @@
+.lbl_resa{
+    display: inline-block;
+    width: 150px;
+    float: left;
+}
+.ipt_resa{
+	 display: block;
+}
+
+
+#les_voyages_titre {
+	cursor: pointer;
+}
+#les_escapades_titre {
+	cursor: pointer;
+}
+
+.voyage_clicked {
+	background-color: #FFE4B9;
+}
+
+#les_voyages_titre
+{
+	background-color: #e4e4e4;
+}
