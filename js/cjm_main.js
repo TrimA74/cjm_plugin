@@ -61,7 +61,9 @@ jQuery(function($){
          modGestionCJM.sup_voyage();
       }
     });
-
+     /*
+    * Suppression d'une escapade en AJAX
+    */
     $("#app_escapade").click(function() {
       if($('#escapdes_action option:selected').val()=="Supprimer")
       {
@@ -119,17 +121,23 @@ jQuery(function($){
         modGestionCJM.modif_resa();
       }
     });
-      $(".paiement_class").each(function(i,e)
-        {
-          $(this).change(function () {
+    /*
+    * Requete AJAX dès que changement sur la checkbox paiement
+    */
+    $(".paiement_class").each(function(i,e)
+      {
+        $(this).change(function () {
 
-          var id = $(this).attr('id').replace("paiement","")
-          var paiement = $(this).is(':checked');
-          modGestionCJM.change_paiement_resa(id,paiement);
+        var id = $(this).attr('id').replace("paiement","")
+        var paiement = $(this).is(':checked');
+        modGestionCJM.change_paiement_resa(id,paiement);
 
 
-          });
         });
+      });
+    /*
+    * Modif d'une réservation 
+    */
       $("#les_resas table tbody tr").each(function(i,e)
       {
           var ids = $(this).children().eq(2).attr('id');
@@ -137,17 +145,13 @@ jQuery(function($){
           var nbplace_a = $("#"+ids+"> td").eq(5).html();
         });
 
-
+      /*
+      * Au clique sur un événement, affichage des réservations de l'événement cliqué 
+      */
       $("#les_voyages table tbody > tr , #les_escapades table tbody > tr").each(function (i,e) {
          $(e).children().eq(1).click(function () {
-            if($(this).hasClass('voyage_clicked'))
-                {
-                   $(e).children().removeClass('voyage_clicked');
-                }
-            else {
-                  $(this).addClass('voyage_clicked');
-                }
-          
+            $("#les_voyages table tbody > tr , #les_escapades table tbody > tr").children().removeClass('voyage_clicked');
+            $(this).addClass('voyage_clicked');      
       if($("#les_voyages").css('display')=="block")
         {
           $("#les_resas h1").html("Les réservations pour le voyage : "+$(e).children().eq(1).text());
@@ -167,6 +171,7 @@ jQuery(function($){
         }
         });
       });
+      /**/
 
 });
   });
