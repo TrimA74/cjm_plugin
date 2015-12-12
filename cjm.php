@@ -30,7 +30,7 @@ function plugin_setup_menu(){
 include_once("ajaxControllerv2.php");
 function test_init(){
       echo "<div class='icon-cjm-resa'></div>";
-      echo "<h1>Gestions des participants</h1>;";
+      echo "<h1>Gestions des participants</h1>";
       echo "<h2 class='nav-tab-wrapper'>";
       echo "<a id='les_voyages_titre' class='nav-tab'>Les voyages</a>";
       echo "<a id='les_escapades_titre' class='nav-tab'>Les Escapades</a>";
