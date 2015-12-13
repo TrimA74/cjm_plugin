@@ -28,9 +28,16 @@ function plugin_setup_menu(){
 
 	}
 include_once("ajaxControllerv2.php");
-function test_init(){
+function test_init() {
       echo "<div class='icon-cjm-resa'></div>";
-      echo "<h1>Gestions des participants</h1>";
+      echo "<h1 id='master_titre_resa'>Gestions des participants</h1>";
+      //  echo "<div id='message' class='updated notice notice-success is-dismissible'>
+      // <p>Coucou ici le message :)</p>
+      // <button type='button' class='notice-dismiss'>
+      // <span class='screen-reader-text'>Ne pas tenir compte de ce message blabla</span>
+      // </button>
+      // </div>";
+      // my_admin_notice("updated","coucou");
       echo "<h2 class='nav-tab-wrapper'>";
       echo "<a id='les_voyages_titre' class='nav-tab'>Les voyages</a>";
       echo "<a id='les_escapades_titre' class='nav-tab'>Les Escapades</a>";
@@ -90,6 +97,13 @@ function test_init(){
 }
 
 add_action( 'init', 'register_cpt_resa' );
+function my_admin_notice($class,$message) {
+    echo"<div class=\"$class is-dismissible notice\"> <p>$message</p>
+          <button type='button' class='notice-dismiss'>
+      <span class='screen-reader-text'>Ne pas tenir compte de ce message blabla</span>
+      </button>
+    </div>"; 
+}
 
 function register_cpt_resa() {
 

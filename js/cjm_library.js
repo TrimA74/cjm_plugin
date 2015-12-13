@@ -87,13 +87,17 @@ var modGetData = (function(){
         */
       },"json")
       .done(function() {
+        /*
+        * Chargement des resas si les événements ont bien été chargés
+        */
          modGetData.get_resas();
+         modGestionCJM.admin_notif("updated","Les réservations et les événements ont bien été chargées",1500);
         })
       /*
       * Si la requête ajax échoue, petit alert des familles
       */
       .fail(function() {
-        alert( "Les événements n'ont pas été chargées." );
+        modGestionCJM.admin_notif("error","Les réservations n'ont pas été chargées.",7000);
         });
     };
     self.get_resas = function () {
@@ -102,6 +106,7 @@ var modGetData = (function(){
           'get_resas' : true , 
         }
          jQuery.post(ajax_object.ajax_url,data,function (data) {
+          console.log(data);
         jQuery("#les_resas table").append("<tr></tr>");
         jQuery("#les_resas table tr").append("<th style='width:5%;' class='manage-column'><input class='sup_resa_class' id='check_sup_resa_all' type='checkbox'></th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Nom Prenom</th>");
@@ -109,6 +114,7 @@ var modGetData = (function(){
         jQuery("#les_resas table tr").append("<th class='manage-column'>Nombre de places Adulte</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Nombre de places Enfant</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Paiement</th>");
+        jQuery("#les_resas table tr").append("<th class='manage-column'>Date Réservation</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Prix</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Téléphone</th>");
         jQuery.each(data,function(i,e){
@@ -127,6 +133,7 @@ var modGetData = (function(){
           else {
             resa.append("<td><input type='checkbox' id='paiement"+e.id_resa+"' class='paiement_class' checked ></td>");
           }
+          resa.append("<td>"+e.date_resa+"</td>");
           var prix_adulte = parseInt(jQuery("#"+type_evenement+""+e.id_evenement).children().eq(5).text());
           var prix_enfant = parseInt(jQuery("#"+type_evenement+""+e.id_evenement).children().eq(6).text());
           resa.append("<td>"+String(calcul_prix_resa(parseInt(e.nbplace_enf),parseInt(e.nbplace),parseInt(prix_enfant),parseInt(prix_adulte)))+"</td>");
@@ -134,10 +141,8 @@ var modGetData = (function(){
                           });
       },"json")
     .fail(function() {
-      alert( "Les réservations n'ont pas été chargées.");
-      });      
-  
-
+      modGestionCJM.admin_notif("error","Les réservations n'ont pas été chargées.",7000);
+      });  
     };
     self.get_resa_by_voyage = function (id_evenement) {
       var data = {
@@ -175,6 +180,16 @@ var modGetData = (function(){
 */
 var modGestionCJM = (function(){
   var self = {};
+  self.admin_notif = function (class_name,message,duration) {
+      if(jQuery("#messsage_notif").length!=0)
+        jQuery("#messsage_notif").remove();
+      jQuery("#master_titre_resa").after("<div style='display:none;' id='messsage_notif' class=\""+class_name+" is-dismissible notice\"></div>");
+      jQuery("#messsage_notif").prepend("<p>"+message+"</p>");
+      jQuery("#messsage_notif").fadeIn();
+      setTimeout(function(){
+         jQuery("#messsage_notif").fadeOut();
+    }, duration);
+  }
   function modif_resa_ajax () {
 
   };
@@ -219,7 +234,14 @@ var modGestionCJM = (function(){
       }
     jQuery.post(ajax_object.ajax_url,data, function (data) {
       jQuery("#voyage"+res).hide();
-    },"json");
+    },"json")
+
+    .fail(function() {
+        modGestionCJM.admin_notif("error","Le voyage n'a pas été supprimé.",5000);
+        })
+    .done(function () {
+        modGestionCJM.admin_notif("updated","Le voyage a bien été supprimé.",2000);
+    });
   }
     self.sup_escapade = function () {
     var checks = jQuery(".sup_escapade_class:checked").attr('id');
@@ -231,7 +253,13 @@ var modGestionCJM = (function(){
       }
     jQuery.post(ajax_object.ajax_url,data, function (data) {
       jQuery("#escapade"+res).hide();
-    },"json");
+    },"json")
+    .fail(function() {
+        modGestionCJM.admin_notif("error","L'escapade n'a pas été supprimé.",5000);
+        })
+    .done(function () {
+        modGestionCJM.admin_notif("updated","L'escapade a bien été supprimé.",2000);
+    });
   }
 
   self.sup_resa = function () {
@@ -246,7 +274,13 @@ var modGestionCJM = (function(){
       }
     jQuery.post(ajax_object.ajax_url,data, function (data) {
       jQuery("#reservation"+res).hide();
-    },"json");
+    },"json")
+    .fail(function() {
+        modGestionCJM.admin_notif("error","La réservation n'a pas été supprimé.",5000);
+        })
+    .done(function () {
+        modGestionCJM.admin_notif("updated","La réservation a bien été supprimé.",2000);
+    });
   }
 
   self.change_paiement_resa = function (id_resa,paiement) {
@@ -259,7 +293,11 @@ var modGestionCJM = (function(){
 
       }, "json"
 
-    );
+    )
+    .done (function () {
+      modGestionCJM.admin_notif("updated","Paiement mis à jour",1500);
+
+    });
   };
   self.GET = function (param) {
   var vars = {};
