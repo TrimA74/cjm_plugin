@@ -1,5 +1,32 @@
 
 /*
+* Module des envoies de mails
+*/
+var modSendEmails = (function () {
+  var self = {};
+  self.send_mail_confirm_paiement = function (content) {
+    var data = {
+      'action' : 'send_mail_confirm',
+      'mail' :'true',
+      'content' : content
+    }
+    jQuery.post(ajax_object.ajax_url,data,function (data) {
+      console.log(data);
+    });
+  }
+  self.tmce_getContent = function (editor_id, textarea_id) {
+    if ( typeof editor_id == 'undefined' ) editor_id = wpActiveEditor;
+    if ( typeof textarea_id == 'undefined' ) textarea_id = editor_id;
+    
+    if ( jQuery('#wp-'+editor_id+'-wrap').hasClass('tmce-active') && tinyMCE.get(editor_id) ) {
+      return tinyMCE.get(editor_id).getContent();
+    }else{
+      return jQuery('#'+textarea_id).val();
+    }
+}
+  return self;
+})();
+/*
 * Module de récupération des données plugin CJM
 */
 var modGetData = (function(){
@@ -37,7 +64,7 @@ var modGetData = (function(){
           'get_evenements' : true , 
           'type_evenement' : type
         }
-          jQuery.post(ajax_object.ajax_url,data,function (data) {
+          jQuery.post(ajax_object.ajax_url,data,function (data) {  
         /*
         * Remplissage du tableau des voyages et des escapades
         * Requete AJAX sur ajaxController pour récupérer tous les événements
@@ -53,6 +80,7 @@ var modGetData = (function(){
         jQuery("#les_voyages table tr").append("<th class='manage-column'>Nombre places restantes</th>");
         jQuery("#les_voyages table tr").append("<th class='manage-column'>Tarif Adulte</th>");
         jQuery("#les_voyages table tr").append("<th class='manage-column'>Tarif Enfant</th>");
+        jQuery("#les_voyages table tr").append("<th class='manage-column'>Etat</th>");
         /*
         * Remplissage de l'en-tête du tableau des escapades 
         */
@@ -64,6 +92,7 @@ var modGetData = (function(){
         jQuery("#les_escapades table tr").append("<th class='manage-column'>Nombre places restantes</th>");
         jQuery("#les_escapades table tr").append("<th class='manage-column'>Tarif Adulte</th>");
         jQuery("#les_escapades table tr").append("<th class='manage-column'>Tarif Enfant</th>");
+        jQuery("#les_escapades table tr").append("<th class='manage-column'>Etat</th>");
         /*
         * Pour chaque Object événement ajout d'une ligne dans le tableau
         *
@@ -79,6 +108,7 @@ var modGetData = (function(){
           ligne.append("<td>"+e.nbplace+"</td>");
           ligne.append("<td>"+e.tarifa+"</td>");
           ligne.append("<td>"+e.tarife+"</td>");
+          ligne.append("<td class='"+e.etat_resa+"'></td>");
 
         });
         /*
@@ -106,39 +136,52 @@ var modGetData = (function(){
           'get_resas' : true , 
         }
          jQuery.post(ajax_object.ajax_url,data,function (data) {
-          console.log(data);
         jQuery("#les_resas table").append("<tr></tr>");
         jQuery("#les_resas table tr").append("<th style='width:5%;' class='manage-column'><input class='sup_resa_class' id='check_sup_resa_all' type='checkbox'></th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Nom Prenom</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Nom voyage</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Nombre de places Adulte</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Nombre de places Enfant</th>");
-        jQuery("#les_resas table tr").append("<th class='manage-column'>Paiement</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Date Réservation</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Prix</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Téléphone</th>");
+        jQuery("#les_resas table tr").append("<th class='manage-column'>Paiement</th>");
+        jQuery("#les_resas table tr").append("<th class='manage-column'>Prioritaire ?</th>");
         jQuery.each(data,function(i,e){
           var type_evenement = e.category.toLowerCase().substr(0,e.category.toLowerCase().length-1);
+          var attente="";
+           if(e.liste_attente==1)
+          {
+            attente="resa_attente";
+          }
           jQuery("#les_resas table").append("<tr id='reservation"+e.id_resa+"'></tr>");
           var resa = jQuery("#reservation"+e.id_resa);
-          resa.append("<td><input type='checkbox' id='check_sup_resa"+e.id_resa+"' class='sup_resa_class' ></td>");
-          resa.append("<td>"+e.user_name+"</td>");
+          resa.append("<td class="+attente+"><input type='checkbox' id='check_sup_resa"+e.id_resa+"' class='sup_resa_class' ></td>");
+          resa.append("<td id='user"+e.id_participant+"'>"+e.display_name+"</td>");
           resa.append("<td id='"+type_evenement+""+e.id_evenement+"'>"+e.nom_voyage+"</td>");
           resa.append("<td name='nb_place_resa'>"+e.nbplace+"</td>");
           resa.append("<td name='nbplace_enf_resa'>"+e.nbplace_enf+"</td>");
-          if(e.paiement==0)
+          resa.append("<td>"+e.date_resa+"</td>");
+          var prix_adulte = parseInt(jQuery("#"+type_evenement+""+e.id_evenement).children().eq(5).text());
+          var prix_enfant = parseInt(jQuery("#"+type_evenement+""+e.id_evenement).children().eq(6).text());
+          // resa.append("<td>"+String(calcul_prix_resa(parseInt(e.nbplace_enf),parseInt(e.nbplace),parseInt(prix_enfant),parseInt(prix_adulte)))+"</td>");
+          resa.append("<td>"+e.prix_total+"</td>");
+          resa.append("<td name='tel_resa' style='mso-number-format:\"@\"'>"+e.tel+"</td>");
+           if(e.paiement==0)
           {
             resa.append("<td><input type='checkbox' id='paiement"+e.id_resa+"' class='paiement_class'></td>");
           }
           else {
             resa.append("<td><input type='checkbox' id='paiement"+e.id_resa+"' class='paiement_class' checked ></td>");
           }
-          resa.append("<td>"+e.date_resa+"</td>");
-          var prix_adulte = parseInt(jQuery("#"+type_evenement+""+e.id_evenement).children().eq(5).text());
-          var prix_enfant = parseInt(jQuery("#"+type_evenement+""+e.id_evenement).children().eq(6).text());
-          resa.append("<td>"+String(calcul_prix_resa(parseInt(e.nbplace_enf),parseInt(e.nbplace),parseInt(prix_enfant),parseInt(prix_adulte)))+"</td>");
-          resa.append("<td name='tel_resa'>"+e.tel+"</td>");
-                          });
+           if(e.liste_attente==1)
+          {
+            resa.append("<td><input type='checkbox' class='att_class' id='att"+e.id_resa+"'></td>");
+          }
+          else {
+            resa.append("<td><input type='checkbox' id='att"+e.id_resa+"' class='att_class' checked ></td>");
+          }
+            });
       },"json")
     .fail(function() {
       modGestionCJM.admin_notif("error","Les réservations n'ont pas été chargées.",7000);
@@ -190,8 +233,24 @@ var modGestionCJM = (function(){
          jQuery("#messsage_notif").fadeOut();
     }, duration);
   }
-  function modif_resa_ajax () {
-
+  function modif_resa_ajax (ress) {
+       var data = {
+        'action' : 'modif_resa',
+        'id' : ress[ress.length-2] , 
+        'nbplace' : ress[3] ,
+        'nbplace_enf' : ress[4],
+        'tel' : ress[7],
+        'id_user' : ress[ress.length-1]
+      }
+    jQuery.post(ajax_object.ajax_url,data, function (msg) {
+      console.log(msg);
+    },"json")
+    .fail(function() {
+        modGestionCJM.admin_notif("error","La modification a échoué",5000);
+        })
+    .done(function () {
+        modGestionCJM.admin_notif("updated","Modification réussie",2000);
+    });
   };
   self.modif_resa = function () {
     var checks = jQuery(".sup_resa_class:checked").attr('id');
@@ -199,29 +258,51 @@ var modGestionCJM = (function(){
     jQuery("#reservation"+res[0]).children().each(function(i,e)
     {
       var textElement = jQuery(e).html();
-      if(!jQuery(e).children().is("input") && i!=1 && i!=2 && i!=6)
+      if(!jQuery(e).children().is("input") && i!=1 && i!=2 && i!=6 && i!=5)
       {
         var name = jQuery(e).attr('name');
-        jQuery(e).html("<input name='modif_"+name+"' type='text' value='"+textElement+"'></input>");
-      }
-    });
-    jQuery("<input type='button' value='Enregistrer' class='button action' id='register_modif_resa'>").insertAfter('#app_resa');
-    jQuery("#register_modif_resa").click( function () {
-      // modif_resa_ajax()
-      // console.log(jQuery("#les_resas").find("table").find("tbody").serialize());
-      var infos = "";
-      jQuery("#les_resas").find("table").find("tbody").find("tr").each(function(i,e)
-      {
-        // test += jQuery(e).children('td').children('input').val();
-        var resa_text = jQuery(e).children('td').children('input:text');
-        if(resa_text.length==3)
+        jQuery(e).html("<input style=\"width:100px;\" name='modif_"+name+"' type='text' value='"+textElement+"'></input>");
+        if(i==3 || i==4)
         {
-          jQuery.each(resa_text,function(i,e){
-            infos += jQuery(e).attr('name') + "=" +jQuery(e).val() + "&";
-          });
+           jQuery(e).html("<input style=\"width:50px;\" name='modif_"+name+"' type='number' value='"+textElement+"'></input>");
         }
         
+      }
+
+    });
+    if(jQuery("#register_modif_resa").length==0)
+    {
+      jQuery("<input type='button' value='Enregistrer' class='button action' id='register_modif_resa'>").insertAfter('#app_resa');
+    }
+    
+    jQuery("#register_modif_resa").click( function () {
+      var infos= [];
+      var vals = [3,4,7];
+      var ress = [];
+      jQuery("#les_resas").find("table").find("tbody").find("tr").each(function(i,e)
+      {
+        if(i!=0)
+        {
+          if(jQuery(e).css('display')=='table-row' && typeof jQuery(e) != 'undefined')
+          {
+            infos[i]= jQuery(e);
+          }
+        }   
       });
+      var user_id;
+      user_id = jQuery("#reservation"+res[0]).children().eq(1).attr('id').match(/\d+/);
+      for(val in vals) {
+        if(vals[val]==8 || vals[val]==9 ){
+            ress[vals[val]]=jQuery("#reservation"+res[0]).children("td").eq(vals[val]).children('input').is(':checked');
+          }
+        else {
+            ress[vals[val]]=jQuery("#reservation"+res[0]).children("td").eq(vals[val]).children('input').val();
+          }
+      }
+      ress.push(res[0]);
+      ress.push(user_id[0]);
+      console.log(ress);
+      modif_resa_ajax(ress);
       });
   };
   self.sup_voyage = function () {
@@ -290,12 +371,26 @@ var modGestionCJM = (function(){
           'id_resa' : id_resa
         }
       jQuery.post(ajax_object.ajax_url,data, function (data) {
-
       }, "json"
 
     )
     .done (function () {
       modGestionCJM.admin_notif("updated","Paiement mis à jour",1500);
+
+    });
+  };
+  self.change_att_resa = function (id_resa,att) {
+      var data = {
+          'action' : 'change_att_resa',
+          'att' : att , 
+          'id_resa' : id_resa
+        }
+      jQuery.post(ajax_object.ajax_url,data, function (data) {
+      }, "json"
+
+    )
+    .done (function () {
+      modGestionCJM.admin_notif("updated","Liste d'attente mise à jour",1500);
 
     });
   };

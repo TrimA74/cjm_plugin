@@ -7,6 +7,7 @@ Version: 1.0
 */
 add_action('admin_menu', 'plugin_setup_menu');
 add_action( 'admin_enqueue_scripts', 'enqueuescript' );
+add_action( 'wp_enqueue_scripts', 'enqueuescriptclient' );
 add_shortcode('my_test', "shortcode");
 function shortcode () {
 	ob_start();
@@ -17,12 +18,30 @@ function enqueuescript(){
         wp_enqueue_script( 'cjm',plugins_url('cjm/js/cjm_main.js'),'1.0');
         wp_enqueue_script( 'cjm2',plugins_url('cjm/js/customAdmin.js'),'1.0');
         wp_enqueue_script( 'cjm_export_excel',plugins_url('cjm/js/jquery.table2excel.js'),'1.0');
+        wp_enqueue_script( 'cjm_export_pdf1',plugins_url('cjm/js/html2pdf/tableExport.js'),'1.0');
+        wp_enqueue_script( 'cjm_export_pdf2',plugins_url('cjm/js/html2pdf/jquery.base64.js'),'1.0');
+        wp_enqueue_script( 'cjm_export_pdf3',plugins_url('cjm/js/html2pdf/sprintf.js'),'1.0');
+        wp_enqueue_script( 'cjm_export_pdf4',plugins_url('cjm/js/html2pdf/jspdf.js'),'1.0');
+        wp_enqueue_script( 'cjm_export_pdf5',plugins_url('cjm/js/html2pdf/base64.js'),'1.0');
+
                 wp_localize_script( 'cjm_library', 'ajax_object',
             array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'user' => "true" ) );
         wp_enqueue_style('style',plugins_url('cjm/style.css'),'2.0');
 
 }
- 
+//scripts js de gestions des forms crud resa
+function enqueuescriptclient(){
+        wp_enqueue_script( 'cjm_gestion_form_client',plugins_url('cjm/js/cjm_gestion_form_client.js'),'1.0');
+        wp_enqueue_style('style',plugins_url('cjm/style_client.css'),'2.0');
+}
+/*
+Modification du type des mails pour le passer en HTML
+*/
+add_filter( 'wp_mail_content_type', 'set_content_type' );
+function set_content_type( $content_type ) {
+  return 'text/html';
+}
+
 function plugin_setup_menu(){
         add_submenu_page( 'edit.php?post_type=reservation', 'Gestion des participants', 'Gestion des participants', 'manage_options', 'my-custom-submenu-page', 'test_init' );
 
@@ -31,23 +50,17 @@ include_once("ajaxControllerv2.php");
 function test_init() {
       echo "<div class='icon-cjm-resa'></div>";
       echo "<h1 id='master_titre_resa'>Gestions des participants</h1>";
-      //  echo "<div id='message' class='updated notice notice-success is-dismissible'>
-      // <p>Coucou ici le message :)</p>
-      // <button type='button' class='notice-dismiss'>
-      // <span class='screen-reader-text'>Ne pas tenir compte de ce message blabla</span>
-      // </button>
-      // </div>";
-      // my_admin_notice("updated","coucou");
       echo "<h2 class='nav-tab-wrapper'>";
       echo "<a id='les_voyages_titre' class='nav-tab'>Les voyages</a>";
       echo "<a id='les_escapades_titre' class='nav-tab'>Les Escapades</a>";
+      echo "<a id='les_mails_titre' class='nav-tab'>Les Mails</a>";
       echo "</h2>";
       /*
-      
+      Les voyages
       */
       echo "<div id='les_voyages' style='display:none;'>";
       echo "<h1>Les voyages</h1>";
-      echo 
+      echo
       "<select id='voyages_action'>
             <option selected=\"selected\">Action</option>
             <option value=\"Supprimer\">Supprimer</option>
@@ -56,11 +69,13 @@ function test_init() {
       echo "<input type='submit' class='button action' value='Appliquer' id='app_voyage'>";
       echo "<table style='border:solid;' class='wp-list-table widefat fixed striped posts'>";
       echo "</table>";
-      echo "</div>"; 
-
+      echo "</div>";
+      /*
+      Les escapades
+      */
       echo "<div id='les_escapades' style='display:none;'>";
       echo "<h1>Les Escapades</h1>";
-      echo 
+      echo
       "<select id='escapdes_action'>
             <option selected=\"selected\">Action</option>
             <option value=\"Supprimer\">Supprimer</option>
@@ -69,31 +84,48 @@ function test_init() {
       echo "<input type='submit' class='button action' value='Appliquer' id='app_escapade'>";
       echo "<table style='border:solid;' class='wp-list-table widefat fixed striped posts'>";
       echo "</table>";
-      echo "</div>"; 
+      echo "</div>";
       /*
-      
+      Les réservations
       */
       echo "<div id='les_resas' style='display:none;'>";
       echo "<h1>Les Réservations</h1>";
-      echo 
+      echo
       "<select id='resa_action'>
             <option selected=\"selected\">Action</option>
             <option value=\"Supprimer\">Supprimer</option>
-            <option value=\"Modifier\">Modifier</option> 
+            <option value=\"Modifier\">Modifier</option>
       </select>";
       echo "<input type='submit' class='button action' value='Appliquer' id='app_resa'>";
       echo "<table style='border:solid;' class='wp-list-table widefat fixed striped posts'>";
       echo "</table>";
-       echo 
+      echo
       "<select id='export_resas'>
             <option  value =\"PDF\" selected=\"selected\">PDF</option>
             <option value=\"Excel\">Excel</option>
       </select>";
       echo "<input type='button' class='button action' value='Exporter' id='btn_export_resa'>";
       echo "</div>";
-
-       
-
+      /*
+      * Les mails
+      */
+      echo "<div id='les_mails'>";
+      echo "<div>";
+      echo "<div id='add_resa'>";
+      echo "<input type='text' placeholder='Nom prénom'></input>";
+      echo "<label>Nombre place adulte</label><input type='number'></input>";
+      echo "<label>Nombre de place enfant</label><input type='number'></input>";
+      echo "<input type='text' placeholder='Téléphone'></input>";
+      echo "<label>Paiement :</label><input type='checkbox'></input>";
+      echo "<label>Liste attente :</label><input type='checkbox'></input>";
+      echo
+      "<select id='add_role'>
+            <option  value =\"adherent\" selected=\"selected\">Adhérent</option>
+            <option value=\"noadherent\">Non Adhérent</option>
+      </select>";
+      submit_button( 'Ajouter réservation',"primary","add_resa" );
+      echo "</div>";  
+      // wp_editor("<p><strong>Coucou</strong></p>","test_mail");submit_button( 'Save content' );
 }
 
 add_action( 'init', 'register_cpt_resa' );
@@ -102,12 +134,12 @@ function my_admin_notice($class,$message) {
           <button type='button' class='notice-dismiss'>
       <span class='screen-reader-text'>Ne pas tenir compte de ce message blabla</span>
       </button>
-    </div>"; 
+    </div>";
 }
 
 function register_cpt_resa() {
 
-    $labels = array( 
+    $labels = array(
         'name' => _x( 'Réservation', 'reservation' ),
         'singular_name' => _x( 'Réservation', 'reservation' ),
         'add_new' => _x( 'Ajouter', 'reservation' ),
@@ -122,7 +154,7 @@ function register_cpt_resa() {
         'menu_name' => _x( 'Réservation', 'reservation' ),
     );
 
-    $args = array( 
+    $args = array(
         'labels' => $labels,
         'hierarchical' => false,
         'description' => 'Les Réservations',
@@ -157,6 +189,7 @@ function info_crea($post){
   $date_debut = get_post_meta($post->ID,'_date_debut',true);
   $date_fin = get_post_meta($post->ID,'_date_fin',true);
   $nb_place = get_post_meta($post->ID,'_nb_place',true);
+  $nb_place_total = get_post_meta($post->ID,'_nb_place_total',true);
   $tarif_adulte = get_post_meta($post->ID,'_tarif_adulte',true);
   $tarif_enfant = get_post_meta($post->ID,'_tarif_enfant',true);
   $tarif_adherent = get_post_meta($post->ID,'_tarif_adherent',true);
@@ -170,6 +203,8 @@ function info_crea($post){
   echo '<input class="ipt_resa" placeholder="JJ-MM-AAAA" id="date_fin_meta" type="text" name="date_fin" value="'.esc_attr($date_fin).'" />';
   echo '<label class="lbl_resa" for="nb_place">Places Disponibles : </label>';
   echo '<input class="ipt_resa" id="nb_place_meta" type="text" name="nb_place" value="'.esc_attr($nb_place).'" />';
+  echo '<label class="lbl_resa" for="nb_place_total">Places Totales : </label>';
+  echo '<input class="ipt_resa" id="nb_place_total_meta" type="text" name="nb_place_total" value="'.esc_attr($nb_place_total).'" />';
   echo '<label class="lbl_resa" for="tarif_adulte">Tarifs Adultes : </label>';
   echo '<input class="ipt_resa" id="tarif_adulte_meta" type="text" name="tarif_adulte" value="'.esc_attr($tarif_adulte).'" />';
   echo '<label class="lbl_resa" for="tarif_enfant">Tarifs Enfants : </label>';
@@ -197,12 +232,15 @@ if(isset($_POST['date_debut'])
   &&isset($_POST['date_fin'])
   &&isset($_POST['nom_voyage'])
   &&isset($_POST['nb_place'])
-  &&isset($_POST['nb_place_enf'])
+  &&isset($_POST['nb_place_total'])
+  &&isset($_POST['etat_resa'])
   &&isset($_POST['tarif_adulte'])
+  &&isset($_POST['tarif_adherent'])
   &&isset($_POST['tarif_enfant']))
   update_post_meta($post_id, '_date_debut', $_POST['date_debut']);
   update_post_meta($post_id, '_date_fin', $_POST['date_fin']);
   update_post_meta($post_id, '_nb_place', $_POST['nb_place']);
+  update_post_meta($post_id, '_nb_place_total', $_POST['nb_place_total']);
   update_post_meta($post_id, '_tarif_adulte', $_POST['tarif_adulte']);
   update_post_meta($post_id, '_tarif_enfant', $_POST['tarif_enfant']);
   update_post_meta($post_id, '_tarif_adherent', $_POST['tarif_adherent']);

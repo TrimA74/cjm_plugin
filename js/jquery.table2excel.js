@@ -49,7 +49,6 @@
                 });
                 e.tableRows.push(tempRows);
             });
-
             e.tableToExcel(e.tableRows, e.settings.name);
         },
 

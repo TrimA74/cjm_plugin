@@ -27,3 +27,19 @@
 .icon-cjm-resa {
 	
 }
+.resa_attente {
+	background-color: #FF4B5C;
+}
+.resa_attente:hover {
+	background-color: #FB1D32;
+}
+.ouvert {
+	background-color: green;
+}
+
+.file_attente {
+	background-color: orange;
+}
+.cloture {
+	background-color: red;
+}
