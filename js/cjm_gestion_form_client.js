@@ -12,7 +12,6 @@ $(".resa_form").submit(function(){
         url : "https://srv-prj.iut-acy.local/jumelage/Best_wordpress_ever/wordpress/wp-content/plugins/cjm/ajaxController.php",
         data : $(this).serialize(),
         success : function(msg){     
-        console.log(msg[0])    
              switch(msg[0]){
              	case 1 : $("#resa_div_id").empty().html("<p>Votre Inscription a bien été prise en compte !</p>").css('color','green');
              	         $("#resa_div_id").css('width','420px');

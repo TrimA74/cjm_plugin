@@ -14,19 +14,38 @@ function shortcode () {
 	add_voyage();
 }
 function enqueuescript(){
-        wp_enqueue_script( 'cjm_library',plugins_url('cjm/js/cjm_library.js'),'1.0');
-        wp_enqueue_script( 'cjm',plugins_url('cjm/js/cjm_main.js'),'1.0');
+        if($_GET["page"]!="my-custom-submenu-page2")
+        {
+          wp_enqueue_style('style',plugins_url('cjm/style.css'),'2.0');
+        }
         wp_enqueue_script( 'cjm2',plugins_url('cjm/js/customAdmin.js'),'1.0');
+				/*
+				Scipts qui ne sont chargés que sur Réservation
+				*/
+				if(isset($_GET["post_type"]) && $_GET["post_type"]=="reservation"){
+				wp_enqueue_script( 'cjm_library',plugins_url('cjm/js/cjm_library.js'),'1.0');
+				/*
+				Scipts qui ne sont chargés que sur Réservation=>Gestion des participants
+				*/
+				if($_GET["page"]=="my-custom-submenu-page"){
+        wp_enqueue_script( 'cjm',plugins_url('cjm/js/cjm_main.js'),'1.0');
         wp_enqueue_script( 'cjm_export_excel',plugins_url('cjm/js/jquery.table2excel.js'),'1.0');
         wp_enqueue_script( 'cjm_export_pdf1',plugins_url('cjm/js/html2pdf/tableExport.js'),'1.0');
         wp_enqueue_script( 'cjm_export_pdf2',plugins_url('cjm/js/html2pdf/jquery.base64.js'),'1.0');
         wp_enqueue_script( 'cjm_export_pdf3',plugins_url('cjm/js/html2pdf/sprintf.js'),'1.0');
         wp_enqueue_script( 'cjm_export_pdf4',plugins_url('cjm/js/html2pdf/jspdf.js'),'1.0');
         wp_enqueue_script( 'cjm_export_pdf5',plugins_url('cjm/js/html2pdf/base64.js'),'1.0');
+				}
+				if($_GET["page"]=="my-custom-submenu-page2")
+				{
+					wp_enqueue_style('style','https://cdn.datatables.net/1.10.10/css/jquery.dataTables.min.css','2.0');
+					wp_enqueue_script( 'datables_js','https://cdn.datatables.net/1.10.10/js/jquery.dataTables.min.js','1.0');
+					wp_enqueue_script( 'cjm_stats',plugins_url('cjm/js/stats/main.js'),'1.0');
+				}
+        wp_localize_script( 'cjm_library', 'ajax_object',
+        array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'user' => "true" ));
 
-                wp_localize_script( 'cjm_library', 'ajax_object',
-            array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'user' => "true" ) );
-        wp_enqueue_style('style',plugins_url('cjm/style.css'),'2.0');
+				}
 
 }
 //scripts js de gestions des forms crud resa
@@ -43,14 +62,44 @@ function set_content_type( $content_type ) {
 }
 
 function plugin_setup_menu(){
-        add_submenu_page( 'edit.php?post_type=reservation', 'Gestion des participants', 'Gestion des participants', 'manage_options', 'my-custom-submenu-page', 'test_init' );
-
+        add_submenu_page( 'edit.php?post_type=reservation', 'Gestion des participants', 'Gestion des participants', 'manage_options', 'my-custom-submenu-page', 'display_cjm_content' );
+        add_submenu_page( 'edit.php?post_type=reservation', 'Statistique', 'Statistique', 'manage_options', 'my-custom-submenu-page2', 'display_cjm_stats' );
 	}
 include_once("ajaxControllerv2.php");
-function test_init() {
-      echo "<div class='icon-cjm-resa'></div>";
+function display_cjm_stats () {
+  echo "<h1>Stats</h1>";
+  echo "<table id='resas' class='display' cellspacing='0' width='100%'>
+        <thead>
+            <tr>
+                <th>Nom Prénom</th>
+                <th>Nom Evenement</th>
+                <th>Nombre place</th>
+                <th>Nombre place enfants</th>
+                <th>Prix total</th>
+                <th>Téléphone</th>
+								<th>Paiement</th>
+								<th>Priorité</th>
+            </tr>
+        </thead>
+        <tfoot>
+            <tr>
+							<th>Nom Prénom</th>
+							<th>Nom Evenement</th>
+							<th>Nombre place</th>
+							<th>Nombre place enfants</th>
+							<th>Prix total</th>
+							<th>Téléphone</th>
+							<th>Paiement</th>
+							<th>Priorité</th>
+            </tr>
+        </tfoot>
+    </table>";
+}
+function display_cjm_content() {
+        echo "<div class='icon-cjm-resa'></div>";
       echo "<h1 id='master_titre_resa'>Gestions des participants</h1>";
       echo "<h2 class='nav-tab-wrapper'>";
+      echo "<img id='reload_all' src='../wp-content/plugins/cjm/img/refresh.png' style='cursor:pointer;float:right;margin-right:10px;'></img>";
       echo "<a id='les_voyages_titre' class='nav-tab'>Les voyages</a>";
       echo "<a id='les_escapades_titre' class='nav-tab'>Les Escapades</a>";
       echo "<a id='les_mails_titre' class='nav-tab'>Les Mails</a>";
@@ -105,34 +154,35 @@ function test_init() {
             <option value=\"Excel\">Excel</option>
       </select>";
       echo "<input type='button' class='button action' value='Exporter' id='btn_export_resa'>";
-      echo "</div>";
-      /*
-      * Les mails
-      */
-      echo "<div id='les_mails'>";
-      echo "<div>";
-      echo "<div id='add_resa'>";
-      echo "<input type='text' placeholder='Nom prénom'></input>";
+      echo "<div id='add_resa_form'>";
+      echo "<input name='add_name' type='text' placeholder='Nom prénom'></input>";
       echo "<label>Nombre place adulte</label><input type='number'></input>";
       echo "<label>Nombre de place enfant</label><input type='number'></input>";
-      echo "<input type='text' placeholder='Téléphone'></input>";
-      echo "<label>Paiement :</label><input type='checkbox'></input>";
-      echo "<label>Liste attente :</label><input type='checkbox'></input>";
+      echo "<input name='add_tel' type='text' placeholder='Téléphone'></input>";
+      echo "<label>Paiement :</label><input name='add_paiement' type='checkbox'></input>";
+      echo "<label>Liste attente :</label><input name='add_list' type='checkbox'></input>";
       echo
       "<select id='add_role'>
             <option  value =\"adherent\" selected=\"selected\">Adhérent</option>
             <option value=\"noadherent\">Non Adhérent</option>
       </select>";
       submit_button( 'Ajouter réservation',"primary","add_resa" );
-      echo "</div>";  
+      echo "</div>";
+      echo "</div>";
+      /*
+      * Les mails
+      */
+      echo "<div id='les_mails'>";
+      echo "<div>";
       // wp_editor("<p><strong>Coucou</strong></p>","test_mail");submit_button( 'Save content' );
+
 }
 
 add_action( 'init', 'register_cpt_resa' );
 function my_admin_notice($class,$message) {
     echo"<div class=\"$class is-dismissible notice\"> <p>$message</p>
           <button type='button' class='notice-dismiss'>
-      <span class='screen-reader-text'>Ne pas tenir compte de ce message blabla</span>
+      <span class='screen-reader-text'>Ne pas tenir compte de ce message </span>
       </button>
     </div>";
 }
@@ -256,6 +306,3 @@ add_action('admin_init','customize_meta_boxes');
 function customize_meta_boxes() {
      remove_meta_box('postcustom','reservation','normal');
 }
-
-
-

@@ -7,12 +7,17 @@ jQuery(function($){
     * Récupérer tous les voyages et toutes les réservations
     * dans la page du plugin en AJAX et traitement en JS pour l'affichage
     */
-
       var get_param = modGestionCJM.GET();
+      /*
+      Boutton pour reload les événemnts et les réservations
+      */
+      jQuery("body").off("click","#reload_all");
+      $("body").on("click","#reload_all",function () {
+        modGestionCJM.reloadData(get_param);
+      });
       if(get_param.post_type=="reservation" && get_param.page=="my-custom-submenu-page")
       {
         modGetData.get_evenements("Les voyages");
-
       }
     if($(this).hasClass('voyage_clicked'))
       {
@@ -99,6 +104,13 @@ jQuery(function($){
     */
     $( document ).ajaxStop(function() {
     /*
+    Formulaire d'ajout de réservation au voyage cliqué
+    */
+    jQuery("body").off("click","#add_resa");
+    jQuery("body").on("click","#add_resa",function () {
+      modGestionCJM.add_resa();
+    });
+    /*
     * Exporter des réservations au format .xls sous Excel
     *
     */
@@ -106,10 +118,8 @@ jQuery(function($){
     $("body").on("click","#btn_export_resa",function () {
     if($("#export_resas option:selected").val()=="Excel"){
       var name = "";
-      if(!$("#les_voyages").is(":hidden"))
-      {
-        name += $("#les_resas h1").html().split(":")[1]
-
+      if(!$("#les_voyages").is(":hidden")){
+        name += $("#les_resas h1").html().split(":")[1];
       }
       else {
          name += $("#les_resas h1").html().split(":")[1];
@@ -120,7 +130,7 @@ jQuery(function($){
       });
     }
     else if ($("#export_resas option:selected").val()=="PDF") {
-      $('#les_resas table').tableExport({type:'pdf',escape:'false',htmlContent:'false',ignoreColumn: [0,7,8]});
+      $('#les_resas table').tableExport({type:'pdf',escape:'false',htmlContent:'false',ignoreColumn: []});
     }
     });
 
@@ -145,9 +155,16 @@ jQuery(function($){
     */
     jQuery("body").off("click",".paiement_class");
     $("body").on("click",".paiement_class",function () {
-      var id = $(this).attr('id').replace("paiement","")
+      var table="";
+      var patt = new RegExp("ext");
+      var id = $(this).attr('id').replace("paiement","");
+      var res = patt.test(id);
+      if(res)
+      {
+        table="ext";id.replace("ext","");
+      }
       var paiement = $(this).is(':checked');
-      modGestionCJM.change_paiement_resa(id,paiement);
+      modGestionCJM.change_paiement_resa(id,paiement,table);
       // modSendEmails.send_mail_confirm_paiement(modSendEmails.tmce_getContent("test_mail"));
     });
     /*
@@ -155,8 +172,15 @@ jQuery(function($){
     */
     jQuery("body").off("click",".att_class");
     $("body").on("click",".att_class",function () {
+        var table="";
+        var patt = new RegExp("ext");
         var id = $(this).attr('id').replace("att","")
         var att = $(this).is(':checked');
+        var res = patt.test(id);
+        if(res)
+        {
+          table="ext";id.replace("ext","");
+        }
         if(!att)
         {
           $("#reservation"+id+" td").eq(0).attr('class','resa_attente');
@@ -164,7 +188,7 @@ jQuery(function($){
         else {
           $("#reservation"+id+" td").eq(0).attr('class','');
         }
-        modGestionCJM.change_att_resa(id,att);
+        modGestionCJM.change_att_resa(id,att,table);
     });
       /*
       * Au clique sur un événement, affichage des réservations de l'événement cliqué
@@ -173,6 +197,7 @@ jQuery(function($){
          $(e).children().eq(1).click(function () {
             $("#les_voyages table tbody > tr , #les_escapades table tbody > tr").children().removeClass('voyage_clicked');
             $(this).addClass('voyage_clicked');
+            $("#add_resa_form").attr('voyage',$(e).attr('id'));
       if($("#les_voyages").css('display')=="block")
         {
           $("#les_resas h1").html("Les réservations pour le voyage : "+$(e).children().eq(1).text());
