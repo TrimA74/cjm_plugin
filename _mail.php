@@ -12,5 +12,6 @@ $query1=$wpdb->get_results("select u.user_login,u.ID,r.id_evenement from cjm_use
 foreach ($query1 as $key => $value) {
 	$value->nom_voyage=get_post_meta($value->id_evenement,"_nom_voyage",true);
 }
-// $users = array_merge($query,$query1);
+
+
 $users = $query1;

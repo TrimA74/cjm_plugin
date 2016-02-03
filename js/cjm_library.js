@@ -5,13 +5,19 @@
 var modSendEmails = (function () {
   var self = {};
   self.send_mail_confirm_paiement = function (content) {
-    var data = {
-      'action' : 'send_mail_confirm',
-      'mail' :'true',
-      'content' : content
-    }
-    jQuery.post(ajax_object.ajax_url,data,function (data) {
-    });
+     jQuery.post(ajax_object.ajax_url,jQuery("#send_email").serialize(),function (data) {
+      console.log(data);
+          if(data!="false")
+          {
+            modGestionCJM.admin_notif("updated","Les mais ont bien été envoyées",1500);
+          }
+          else {
+            modGestionCJM.admin_notif("error","Les mails n'ont pas été envoyés.",7000);
+          }
+      })
+      .fail(function() {
+        modGestionCJM.admin_notif("error","Les mails n'ont pas été envoyés.",7000);
+        });
   }
   self.tmce_getContent = function (editor_id, textarea_id) {
     if ( typeof editor_id == 'undefined' ) editor_id = wpActiveEditor;
@@ -115,7 +121,6 @@ var modGetData = (function(){
           var text="";
           if(e.etat_resa=="ouvert"){text="Ouvert";}else if(e.etat_resa=="cloture"){text="Cloturé";} else if(e.etat_resa=="file_attente"){text="En attente";}
           ligne.append("<td class='etat_event "+e.etat_resa+"'>"+text+"</td>");
-
         });
         /*
         * Fin du remplissage du tableau
@@ -236,7 +241,7 @@ var modGestionCJM = (function(){
     jQuery("#les_resas table").html("");
     jQuery("#les_escapades table").html("");
     jQuery("#les_voyages table").html("");
-    if(get_param.post_type=="reservation" && get_param.page=="my-custom-submenu-page")
+    if(get_param.post_type=="reservation" && get_param.page=="gestion-participants")
     {
       modGetData.get_evenements("Les voyages");
     }
@@ -484,21 +489,17 @@ var modGestionCJM = (function(){
     });
   };
   self.GET = function (param) {
-  var vars = {};
-  window.location.href.replace(
-    /[?&]+([^=&]+)=?([^&]*)?/gi, // regexp
-    function( m, key, value ) { // callback
-      vars[key] = value !== undefined ? value : '';
-    }
-  );
-  if ( param ) {
-    return vars[param] ? vars[param] : null;
+    var vars = {};
+    window.location.href.replace(
+      /[?&]+([^=&]+)=?([^&]*)?/gi, // regexp
+      function( m, key, value ) { // callback
+        vars[key] = value !== undefined ? value : '';
       }
-    return vars;
+    );
+    if ( param ) {
+      return vars[param] ? vars[param] : null;
+        }
+      return vars;
   };
-
   return self;
-
-
-
-  })();
+})();

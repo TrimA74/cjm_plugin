@@ -1,15 +1,51 @@
 <?php
-
+add_action( 'wp_ajax_send_email_confirm', 'send_email_confirm' );
+function send_email_confirm() {
+    global $wpdb;
+    $res = $wpdb->get_results("select * from cjm_mail where id=".$_POST["id"].";");
+    $title = stripslashes($res[0]->title);
+    $content = stripslashes($res[0]->content);
+    foreach ($_POST["users"] as $key => $value) {
+      $infos = explode("&",$value);
+      $user = get_user_by( "login", $infos[0]);
+      $user_id = $user->ID;
+      $user_infos = $wpdb->get_results("select nbplace,nbplace_enf,prix_total from cjm_reservation where id_participant=".$user_id);
+      $tarif_adulte = get_post_meta($infos[1],"_tarif_adulte",true);
+      $tarif_enf = get_post_meta($infos[1],"_tarif_enfant",true);
+      $tarif_adh = get_post_meta($infos[1],"_tarif_adherent",true);
+      $event_name = get_post_meta($infos[1],"_nom_voyage",true);
+      $title = str_replace("%prix_total%",$user_infos[0]->prix_total,$title);
+      $content = str_replace("%prix_total%",$user_infos[0]->prix_total,$content);
+      $content = str_replace("%USERNAME%",$user->display_name,$content);
+      $content = str_replace("%evenement%",$event_name,$content);
+      $content = str_replace("%nbplace_enf%",$user_infos[0]->nbplace_enf,$content);
+      $content = str_replace("%nbplace%",$user_infos[0]->nbplace,$content);
+      $content = str_replace("%prix_place%",$tarif_adulte,$content);
+      $content = str_replace("%prix_place_enf%",$tarif_enf,$content);
+      $content = str_replace("%prix_place_adh%",$tarif_adh,$content);
+      $content = str_replace("%lien%",get_site_url()."/?p=".$infos[1],$content);
+      $isSent = wp_mail($infos[0],$title,$content);
+    }
+    if($isSent)
+    {
+      $last_query = $wpdb->update('cjm_reservation',
+      array("mail_confirm"=>1),
+      array("id_evenement"=>$infos[1],
+      "id_participant"=>$user_id),
+      array("%d"),
+      array("%d","%d"));
+    }
+    echo json_encode($last_query);
+}
+add_action( 'wp_ajax_nopriv_get_logged_user', 'get_logged_user_callback');
 function get_logged_user_callback() {
   global $wpdb;
   $user = wp_get_current_user();
   echo json_encode($user);
   wp_die();
 }
-add_action( 'wp_ajax_nopriv_get_logged_user', 'get_logged_user_callback');
-
+add_action('wp_ajax_get_evenements','get_evenements_callback');
 function get_evenements_callback () {
-
 if(isset($_POST["get_evenements"]) && isset($_POST["type_evenement"]))
 {
   global $wpdb;
@@ -41,9 +77,7 @@ if(isset($_POST["get_evenements"]) && isset($_POST["type_evenement"]))
 }
 wp_die();
 }
-
-add_action('wp_ajax_get_evenements','get_evenements_callback');
-
+add_action('wp_ajax_get_resas','get_resas_callback');
 function get_resas_callback () {
   global $wpdb;
   if(isset($_POST["get_resas"]))
@@ -112,38 +146,32 @@ function get_resas_callback () {
 }
   wp_die();
 }
-
-add_action('wp_ajax_get_resas','get_resas_callback');
-
+add_action('wp_ajax_get_resa_by_voyage','get_resa_by_voyage_callback');
 function get_resa_by_voyage_callback () {
   global $wpdb;
+  if(isset($_POST["get_resa_by_voyage"]) && isset($_POST["id_evenement"]) && !empty($_POST["id_evenement"]))
+    {
+      $id_evenement=$_POST["id_evenement"];
+      $res = $wpdb->get_results("select r.date_resa,r.id_evenement,r.id_participant,r.id_resa,r.nbplace,r.paiement from cjm_reservation r
+      join cjm_users u on u.ID=r.id_participant
+      where id_evenement=$id_evenement
+      ;");
+    foreach ($res as $key => $value) {
+      $prenom = get_user_meta($value->id_participant,"first_name", true);
+      $nom = get_user_meta($value->id_participant,"last_name", true);
+      $value->user_name=$nom." ".$prenom;
+      $nomv = get_post_meta($value->id_evenement,"_nom_voyage",true);
+      $value->nom_voyage=$nomv;
+      $tel = get_user_meta($value->id_participant,"tel",true);
+      $value->tel=$tel;
+    }
 
+    echo json_encode($res);
 
-if(isset($_POST["get_resa_by_voyage"]) && isset($_POST["id_evenement"]) && !empty($_POST["id_evenement"]))
-  {
-    $id_evenement=$_POST["id_evenement"];
-    $res = $wpdb->get_results("select r.date_resa,r.id_evenement,r.id_participant,r.id_resa,r.nbplace,r.paiement from cjm_reservation r
-    join cjm_users u on u.ID=r.id_participant
-    where id_evenement=$id_evenement
-    ;");
-  foreach ($res as $key => $value) {
-    $prenom = get_user_meta($value->id_participant,"first_name", true);
-    $nom = get_user_meta($value->id_participant,"last_name", true);
-    $value->user_name=$nom." ".$prenom;
-    $nomv = get_post_meta($value->id_evenement,"_nom_voyage",true);
-    $value->nom_voyage=$nomv;
-    $tel = get_user_meta($value->id_participant,"tel",true);
-    $value->tel=$tel;
-  }
-
-  echo json_encode($res);
-
-  }
+    }
   wp_die();
 }
-
-add_action('wp_ajax_get_resa_by_voyage','get_resa_by_voyage_callback');
-
+add_action('wp_ajax_get_user_by_id' , 'get_user_by_id_callback');
 function get_user_by_id_callback () {
   global $wpdb;
   if(isset($_POST["user_by_id"]) && isset($_POST["id_user"]) && !empty($_POST["id_user"]))
@@ -156,9 +184,7 @@ function get_user_by_id_callback () {
   }
   wp_die();
 }
-
-add_action('wp_ajax_get_user_by_id' , 'get_user_by_id_callback');
-
+add_action('wp_ajax_change_paiement_resa','change_paiement_resa_callback');
 function change_paiement_resa_callback () {
   global $wpdb;
 
@@ -196,8 +222,7 @@ function change_paiement_resa_callback () {
   }
   wp_die();
 }
-add_action('wp_ajax_change_paiement_resa','change_paiement_resa_callback');
-
+add_action('wp_ajax_change_att_resa','change_att_resa_callback');
 function change_att_resa_callback () {
   global $wpdb;
 
@@ -224,8 +249,7 @@ function change_att_resa_callback () {
   }
   wp_die();
 }
-add_action('wp_ajax_change_att_resa','change_att_resa_callback');
-
+add_action('wp_ajax_sup_resa','sup_resa_callback');
 function sup_resa_callback () {
   global $wpdb;
   $values = array($_POST["id_resa"],$_POST["table"]);
@@ -245,8 +269,7 @@ function sup_resa_callback () {
   }
   wp_die();
 }
-add_action('wp_ajax_sup_resa','sup_resa_callback');
-
+add_action('wp_ajax_sup_voyage','sup_voyage_callback');
 function sup_voyage_callback () {
   global $wpdb;
   if(isset($_POST["delete_voyage"]))
@@ -264,10 +287,7 @@ function sup_voyage_callback () {
   }
   wp_die();
 }
-
-add_action('wp_ajax_sup_voyage','sup_voyage_callback');
-
-
+add_action('wp_ajax_sup_escapade','sup_escapade_callback');
 function sup_escapade_callback () {
   global $wpdb;
   if(isset($_POST["delete_escapade"]))
@@ -286,9 +306,7 @@ function sup_escapade_callback () {
   }
   wp_die();
 }
-
-add_action('wp_ajax_sup_escapade','sup_escapade_callback');
-
+add_action('wp_ajax_modif_resa','modif_resa_callback');
 function modif_resa_callback () {
   global $wpdb;
   $error="";
@@ -339,8 +357,7 @@ function modif_resa_callback () {
   }
   wp_die();
 }
-add_action('wp_ajax_modif_resa','modif_resa_callback');
-
+add_action('wp_ajax_send_mail_confirm','send_mail_confirm');
 function send_mail_confirm () {
   global $wpdb;
   if(isset($_POST["mail"])
@@ -353,9 +370,7 @@ function send_mail_confirm () {
   }
   wp_die();
 }
-add_action('wp_ajax_send_mail_confirm','send_mail_confirm');
-
-
+add_action('wp_ajax_add_resa','add_resa');
 function add_resa () {
   global $wpdb;
   if(isset($_POST["nom"])
@@ -382,12 +397,6 @@ function add_resa () {
     {
       $list=1;
     }
-    // if($_POST["role"]=="adherent")  {
-    //     $prix = $_POST["nbplace"] * get_post_meta($_POST["id_evenement"],"_tarif_adherent",true) + $_POST["nbplace_enf"] * get_post_meta($_POST["id_evenement"],"_tarif_enfant",true);
-    // }
-    // else if($_POST["role"]=="noadherent"){
-    //   $prix = $_POST["nbplace"] * get_post_meta($_POST["id_evenement"],"_tarif_adulte",true) + $_POST["nbplace_enf"] * get_post_meta($_POST["id_evenement"],"_tarif_enfant",true);
-    // }
     $res= $wpdb->insert(
     cjm_reservation_ext,
     array(
@@ -415,12 +424,8 @@ function add_resa () {
   }
   wp_die();
 }
-
-add_action('wp_ajax_add_resa','add_resa');
-
-
 /* CLIENT GESTION RESERVATIONS */
-
+add_action('wp_ajax_ins_resa','ins_resa');
 function ins_resa () {
   global $wpdb;
   if(isset($_POST["pl_adulte"]) && isset($_POST["pl_enfant"]) && isset($_POST["post_id"]) )
@@ -472,8 +477,7 @@ function ins_resa () {
   }
    wp_die();
 }
-add_action('wp_ajax_ins_resa','ins_resa');
-
+add_action('wp_ajax_upd_resa','upd_resa');
 function upd_resa () {
   global $wpdb;
   if(isset($_POST["pl_adulte_upd"])  && isset($_POST["pl_enfant_upd"]))
@@ -527,8 +531,7 @@ function upd_resa () {
   }
   wp_die();
 }
-add_action('wp_ajax_upd_resa','upd_resa');
-
+add_action('wp_ajax_del_resa','del_resa');
 function del_resa () {
   if(isset($_POST["post_id_annul"]) && !empty($_POST["post_id_annul"]))
     {
@@ -549,4 +552,3 @@ function del_resa () {
     }
  wp_die();
 }
-add_action('wp_ajax_del_resa','del_resa');

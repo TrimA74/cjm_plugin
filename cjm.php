@@ -6,142 +6,125 @@ Author: SEBIRE Florian & SAUSSIER Julien
 Version: 1.0
 */
 add_action('admin_menu', 'plugin_setup_menu');
-add_action( 'admin_enqueue_scripts', 'enqueuescript' );
-add_action( 'wp_enqueue_scripts', 'enqueuescriptclient' );
-add_shortcode('my_test', "shortcode");
-function shortcode () {
-	ob_start();
-	add_voyage();
-}
-function enqueuescript(){
-        if($_GET["page"]!="my-custom-submenu-page2")
+add_action( 'admin_enqueue_scripts', 'enqueuescript_back' );
+add_action( 'wp_enqueue_scripts', 'enqueuescript_front' );
+function enqueuescript_back(){
+				/*
+				**** Scripts chargés partout sur la partie admin
+				*/
+				wp_enqueue_script( 'cjm_library',plugins_url('cjm/js/cjm_library.js'),'1.0');
+				wp_enqueue_script( 'cjm2',plugins_url('cjm/js/customAdmin.js'),'1.0');
+				/*
+				* Scripts chargées sur chaque page du plugin en back-office sauf la page de stats
+				*/
+        if($_GET["page"]!="reservation-stats")
         {
           wp_enqueue_style('style',plugins_url('cjm/style.css'),'2.0');
         }
-        wp_enqueue_script( 'cjm_library',plugins_url('cjm/js/cjm_library.js'),'1.0');
-        wp_enqueue_script( 'cjm2',plugins_url('cjm/js/customAdmin.js'),'1.0');
 				/*
 				Scipts qui ne sont chargés que sur Réservation
 				*/
 				if(isset($_GET["post_type"]) && $_GET["post_type"]=="reservation"){
-
-				/*
-				Scipts qui ne sont chargés que sur Réservation=>Gestion des participants
-				*/
-				if($_GET["page"]=="my-custom-submenu-page"){
-        wp_enqueue_script( 'cjm',plugins_url('cjm/js/cjm_main.js'),'1.0');
-        wp_enqueue_script( 'cjm_export_excel',plugins_url('cjm/js/jquery.table2excel.js'),'1.0');
-        wp_enqueue_script( 'cjm_export_pdf1',plugins_url('cjm/js/html2pdf/tableExport.js'),'1.0');
-        wp_enqueue_script( 'cjm_export_pdf2',plugins_url('cjm/js/html2pdf/jquery.base64.js'),'1.0');
-        wp_enqueue_script( 'cjm_export_pdf3',plugins_url('cjm/js/html2pdf/sprintf.js'),'1.0');
-        wp_enqueue_script( 'cjm_export_pdf4',plugins_url('cjm/js/html2pdf/jspdf.js'),'1.0');
-        wp_enqueue_script( 'cjm_export_pdf5',plugins_url('cjm/js/html2pdf/base64.js'),'1.0');
-				}
-				if($_GET["page"]=="my-custom-submenu-page2")
-				{
-					wp_enqueue_style('style','https://cdn.datatables.net/1.10.10/css/jquery.dataTables.min.css','2.0');
-					wp_enqueue_script( 'datables_js','https://cdn.datatables.net/1.10.10/js/jquery.dataTables.min.js','1.0');
-					wp_enqueue_script( 'cjm_stats',plugins_url('cjm/js/stats/main.js'),'1.0');
-				}
-        if($_GET["page"]=="my-custom-submenu-page3")
-        {
-          wp_enqueue_script( 'cjm_mails',plugins_url('cjm/js/mails/main.js'),'1.0');
-          wp_enqueue_style('mail',plugins_url('cjm/mail.css'),'2.0');
-        }
-        wp_localize_script( 'cjm_library', 'ajax_object',
-        array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'user' => "true" ));
-
+					/*
+					**** Scipts qui ne sont chargés que sur Réservation=>Gestion des participants
+					**** Plugin JavaScript pour exportation en excel et pdf
+					*/
+					if($_GET["page"]=="gestion-participants"){
+		        wp_enqueue_script( 'cjm',plugins_url('cjm/js/cjm_main.js'),'1.0');
+		        wp_enqueue_script( 'cjm_export_excel',plugins_url('cjm/js/jquery.table2excel.js'),'1.0');
+		        wp_enqueue_script( 'cjm_export_pdf1',plugins_url('cjm/js/html2pdf/tableExport.js'),'1.0');
+		        wp_enqueue_script( 'cjm_export_pdf2',plugins_url('cjm/js/html2pdf/jquery.base64.js'),'1.0');
+		        wp_enqueue_script( 'cjm_export_pdf3',plugins_url('cjm/js/html2pdf/sprintf.js'),'1.0');
+		        wp_enqueue_script( 'cjm_export_pdf4',plugins_url('cjm/js/html2pdf/jspdf.js'),'1.0');
+		        wp_enqueue_script( 'cjm_export_pdf5',plugins_url('cjm/js/html2pdf/base64.js'),'1.0');
+					}
+					if($_GET["page"]=="reservation-stats")
+					{
+						wp_enqueue_style('style','https://cdn.datatables.net/1.10.10/css/jquery.dataTables.min.css','2.0');
+						wp_enqueue_script( 'datables_js','https://cdn.datatables.net/1.10.10/js/jquery.dataTables.min.js','1.0');
+						wp_enqueue_script( 'cjm_stats',plugins_url('cjm/js/stats/main.js'),'1.0');
+					}
+	        if($_GET["page"]=="templates-mails")
+	        {
+	          wp_enqueue_script( 'cjm_mails',plugins_url('cjm/js/mails/main.js'),'1.0');
+	          wp_enqueue_style('mail',plugins_url('cjm/mail.css'),'2.0');
+	        }
+					/*
+					**** Création d'un objet JavaScript global en partie back-office
+					**** @ajax_object --> nom de la variable global
+					**** Exemple en JS : console.log("ajax_object.ajax_url"); Affiche l'url pour faire les appels AJAX sur WordPress
+					*/
+	        wp_localize_script(
+					'cjm_library',
+					'ajax_object',
+	        array(
+						'ajax_url' => admin_url( 'admin-ajax.php' ),
+						 'user' => "true" ));
 				}
 
 }
+/*
+**** Scripts JS & feuille CSS chargées en front-office
+*/
 //scripts js de gestions des forms crud resa
-function enqueuescriptclient(){
+function enqueuescript_front(){
         wp_enqueue_script( 'cjm_gestion_form_client',plugins_url('cjm/js/cjm_gestion_form_client.js'),'1.0');
         wp_enqueue_style('style',plugins_url('cjm/style_client.css'),'2.0');
 }
 /*
-Modification du type des mails pour le passer en HTML
+**** Modification du type des mails pour le passer en HTML
 */
 add_filter( 'wp_mail_content_type', 'set_content_type' );
-function set_content_type( $content_type ) {
-  return 'text/html';
-}
-
+function set_content_type( $content_type ) {return 'text/html';}
+/*
+**** Function qui créer les submenus 'Gestion des participants','Statistique','Mails' sur le menu 'Evénements'
+*/
 function plugin_setup_menu(){
-        add_submenu_page( 'edit.php?post_type=reservation', 'Gestion des participants', 'Gestion des participants', 'manage_options', 'my-custom-submenu-page', 'display_cjm_content' );
-        add_submenu_page( 'edit.php?post_type=reservation', 'Statistique', 'Statistique', 'manage_options', 'my-custom-submenu-page2', 'display_cjm_stats' );
-        add_submenu_page( 'edit.php?post_type=reservation', 'Mails', 'Mails', 'manage_options', 'my-custom-submenu-page3', 'display_cjm_mails' );
+        add_submenu_page( 'edit.php?post_type=reservation', 'Gestion des participants', 'Gestion des participants', 'manage_options', 'gestion-participants', 'display_cjm_content' );
+        add_submenu_page( 'edit.php?post_type=reservation', 'Statistique', 'Statistique', 'manage_options', 'reservation-stats', 'display_cjm_stats' );
+        add_submenu_page( 'edit.php?post_type=reservation', 'Mails', 'Mails', 'manage_options', 'templates-mails', 'display_cjm_mails' );
 	}
-include_once("ajaxControllerv2.php");
-add_action( 'admin_post_send_email', 'prefix_admin_send_email' );
-
-function prefix_admin_send_email() {
-    global $wpdb;
-    var_dump($_POST);
-    foreach ($_POST["users"] as $key => $value) {
-      $infos = explode("&",$value);
-			$user = get_user_by( "login", $infos[0]);
-			$user_id = $user->ID;
-			$user_infos = $wpdb->get_results("select nbplace,nbplace_enf,prix_total from cjm_reservation where id_participant=".$user_id);
-      $tarif_adulte = get_post_meta($infos[1],"_tarif_adulte",true);
-      $tarif_enf = get_post_meta($infos[1],"_tarif_enfant",true);
-      $tarif_adh = get_post_meta($infos[1],"_tarif_adherent",true);
-			$event_name = get_post_meta($infos[1],"_nom_voyage",true);
-      $res = $wpdb->get_results("select * from cjm_mail where id=".$_POST["id"].";");
-      $title = stripslashes($res[0]->title);
-      $content = stripslashes($res[0]->content);
-      $title = str_replace("%prix_total%",$user_infos[0]->prix_total,$title);
-      $content = str_replace("%prix_total%",$user_infos[0]->prix_total,$content);
-      $content = str_replace("%USERNAME%",$user->display_name,$content);
-      $content = str_replace("%evenement%",$event_name,$content);
-      $content = str_replace("%nbplace_enf%",$user_infos[0]->nbplace_enf,$content);
-      $content = str_replace("%nbplace%",$user_infos[0]->nbplace,$content);
-      $content = str_replace("%prix_place%",$tarif_adulte,$content);
-      $content = str_replace("%prix_place_enf%",$tarif_enf,$content);
-      $content = str_replace("%prix_place_adh%",$tarif_adh,$content);
-      $content = str_replace("%espace%","</br>",$content);
-      $isSent = wp_mail($infos[0],$title,$content);
-    }
-    if($isSent)
-    {
-      $last_query = $wpdb->update('cjm_reservation',
-			array("mail_confirm"=>1),
-			array("id_evenement"=>$infos[1],
-			"id_participant"=>$user_id),
-			array("%d"),
-			array("%d","%d"));
-    }
-    header('Location: edit.php?post_type=reservation&page=my-custom-submenu-page');
-}
+/*
+**** @include Controller AJAX
+*/
+include_once("ajaxController.php");
+/*
+**** Controller qui mets à jour les templates de mails en BDD
+*/
 add_action( 'admin_post_save_email', 'prefix_admin_save_email' );
-
 function prefix_admin_save_email() {
     global $wpdb;
     $res = $wpdb->update('cjm_mail',array(
       "title"=>stripslashes($_POST["post_title"]),
-      "content"=> stripslashes($_POST["test_mail"])
-      ),array("id"=>1));
-    header('Location: edit.php?post_type=reservation&page=my-custom-submenu-page3');
+      "content"=> stripslashes($_POST["mail_content".$_POST["id"]])
+      ),array("id"=>$_POST["id"]));
+    header('Location: edit.php?post_type=reservation&page=templates-mails');
 }
+/*
+**** Affichage du contenu dans la page Mails
+*/
 function display_cjm_mails () {
     /*
     * Les mails
     */
     global $wpdb;
-    $res = $wpdb->get_results("select * from cjm_mail where id=1");
+    $res = $wpdb->get_results("select * from cjm_mail");
     echo "<h1>Les mails</h1>";
     foreach ($res as $key => $value) {
       $mail_message = stripslashes(stripslashes($value->content));
       $title = stripslashes(stripslashes($value->title));
       echo "<form method='post' action='admin-post.php?action=save_email'>";
-      echo "<input style='font-size: x-large;' type='text' name='post_title' size='50' value='".$title."'' id='title' placeholder='Titre'>";
-      wp_editor($mail_message,"test_mail");
-      echo "<input type=\"hidden\" name=\"id\" value='".$id."'>";
+      echo "<input style='font-size: x-large;' type='text' name='post_title' size='50' value=\"".$value->title."\" id='title".$value->id."' placeholder='Titre'>";
+      wp_editor($mail_message,"mail_content".$value->id,array("wpautop"=>false));
+      echo "<input type=\"hidden\" name=\"id\" value='".$value->id."'>";
       echo "<input type=\"hidden\" name=\"action\" value=\"save_email\">";
       submit_button( 'Sauvegarder' ,'primary');
       echo "</form>";
     }
 }
+/*
+**** Affichage du contenu dans la page Statistique
+*/
 function display_cjm_stats () {
   echo "<h1>Stats</h1>";
   echo "<table id='resas' class='hover row-border' cellspacing='0' width='100%'>
@@ -175,8 +158,12 @@ function display_cjm_stats () {
         </tfoot>
     </table>";
 }
+/*
+**** Affichage du contenu dans la page Gestion des participants
+*/
 function display_cjm_content() {
-        echo "<div class='icon-cjm-resa'></div>";
+			my_admin_notice("updated","Petite fonction cool :)");
+      echo "<div class='icon-cjm-resa'></div>";
       echo "<h1 id='master_titre_resa'>Gestions des participants</h1>";
       echo "<h2 class='nav-tab-wrapper'>";
       echo "<img id='reload_all' src='../wp-content/plugins/cjm/img/refresh.png' style='cursor:pointer;float:right;margin-right:10px;'></img>";
@@ -256,24 +243,34 @@ function display_cjm_content() {
     */
     echo "<div id='les_mails' style='display:none;'>";
     echo "<h1 onclick='window.location.href=\"&mails=true\"'>Confirmation de paiement</h1>";
-    include("_mail.php");
-    foreach ($res as $key => $value) {
+		global $wpdb;
+		$res = $wpdb->get_results("select * from cjm_mail where id=1");
+		$users=$wpdb->get_results("select u.user_login,u.ID,r.id_evenement from cjm_users u
+			join cjm_reservation r on r.id_participant=u.ID
+			where r.paiement=1 and r.mail_confirm=0");
+		foreach ($users as $key => $value) {
+			$value->nom_voyage=get_post_meta($value->id_evenement,"_nom_voyage",true);
+			}
+    	foreach ($res as $key => $value) {
       $mail_message = stripslashes(stripslashes($value->content));
       $title = stripslashes(stripslashes($value->title));
       $id= $value->id;
-      echo "<form method='post' action='admin-post.php?action=send_email'>";
+      // echo "<form method='post' action='admin-post.php?action=send_email'>";
+      echo "<form id='send_email'>";
       foreach ($users as $key => $value) {
         echo "<input type='checkbox' name='users[]' value ='".$value->user_login."&".$value->id_evenement."'>".$value->user_login." de l'événement <strong>".$value->nom_voyage."</strong></input></br>";
       }
-      echo "<input type=\"hidden\" name=\"action\" value=\"send_email\">";
+      echo "<input type=\"hidden\" name=\"action\" value=\"send_email_confirm\">";
       echo "<input type=\"hidden\" name=\"id\" value='".$id."''>";
-      submit_button( 'Envoyer' ,'primary');
+      echo "<input class='button button-primary' type='button' value='Envoyer' id='send_email_btn'></input>";
       echo "</form>";
     }
     echo "<div>";
 }
-
-add_action( 'init', 'register_cpt_resa' );
+/*
+**** @my_admin_notice
+**** Petite Fonction bien cool pour afficher des messages (succès,erreur,informatif) en PHP !
+*/
 function my_admin_notice($class,$message) {
     echo"<div class=\"$class is-dismissible notice\"> <p>$message</p>
           <button type='button' class='notice-dismiss'>
@@ -281,7 +278,10 @@ function my_admin_notice($class,$message) {
       </button>
     </div>";
 }
-
+/*
+**** Définition du nouveau type de post 'réservation'
+*/
+add_action( 'init', 'register_cpt_resa' );
 function register_cpt_resa() {
 
     $labels = array(
@@ -319,17 +319,19 @@ function register_cpt_resa() {
         'rewrite' => true,
         'capability_type' => 'post'
     );
-
     register_post_type( 'reservation', $args );
-
 }
-
-//  meta box reservation
+/*
+**** Ajout des meta-boxes pour avoir des informations supplémentaires à ajouter sur le post concernent l'événement
+**** Données stockées dans cjm_postmeta
+*/
  add_action('add_meta_boxes','init_metabox');
 function init_metabox(){
   add_meta_box('info_crea', 'Informations Evénement', 'info_crea', 'reservation', 'normal');
 }
-
+/*
+**** Définition des meta-boxes
+*/
 function info_crea($post){
   $date_debut = get_post_meta($post->ID,'_date_debut',true);
   $date_fin = get_post_meta($post->ID,'_date_fin',true);
@@ -368,9 +370,10 @@ function info_crea($post){
      if($etat_resa == 'cloture'){echo 'selected = "selected"';}
       echo '>Cloturé</option>';
   echo '</select>';
-
 }
-
+/*
+**** Fonction pour sauvegarder le nouveau post avec les meta-boxes
+*/
 add_action('save_post','save_metabox');
 function save_metabox($post_id){
   if($_POST["post_type"]!="reservation")
@@ -389,7 +392,7 @@ function save_metabox($post_id){
   {
     update_post_meta($post_id, '_date_debut', $_POST['date_debut']);
     update_post_meta($post_id, '_date_fin', $_POST['date_fin']);
-    update_metadata ('post', $post_id, '_nb_place', $_POST['nb_place']);
+    update_metadata ('post', $post_id, '_nb_place', $_POST['nb_place']); // fait la même chose,juste pour le test :)
     update_post_meta($post_id, '_nb_place_total', $_POST['nb_place_total']);
     update_post_meta($post_id, '_tarif_adulte', $_POST['tarif_adulte']);
     update_post_meta($post_id, '_tarif_enfant', $_POST['tarif_enfant']);
@@ -399,9 +402,10 @@ function save_metabox($post_id){
 
   }
 }
-
+/*
+**** Remove des meta-boxes pour tous les posts qui ne sont pas des événements
+*/
 add_action('admin_init','customize_meta_boxes');
-
 function customize_meta_boxes() {
      remove_meta_box('postcustom','reservation','normal');
 }
