@@ -72,27 +72,30 @@ var modGetData = (function(){
         * Remplissage de l'en-tête du tableau des voyages
         */
         jQuery("#les_voyages table").append("<thead><tr></tr></thead>");
-        jQuery("#les_voyages table tr").append("<th  style='width:5%;' class='manage-column'><input class='sup_voyage_class' id='check_sup_voyage_all' type='checkbox'></th>");
-        jQuery("#les_voyages table tr").append("<th class='manage-column'>Nom du voyage</th>");
-        jQuery("#les_voyages table tr").append("<th class='manage-column'>Début</th>");
-        jQuery("#les_voyages table tr").append("<th class='manage-column'>Fin</th>");
-        jQuery("#les_voyages table tr").append("<th class='manage-column'>Nombre places</th>");
-        jQuery("#les_voyages table tr").append("<th class='manage-column'>Tarif Adulte</th>");
-        jQuery("#les_voyages table tr").append("<th class='manage-column'>Tarif Enfant</th>");
-        jQuery("#les_voyages table tr").append("<th class='manage-column'>Tarif Adherent</th>");
-        jQuery("#les_voyages table tr").append("<th class='manage-column'>Etat</th>");
+        var voyage = jQuery("#les_voyages table thead tr");
+        voyage.append("<th  style='width:5%;' class='manage-column'><input class='sup_voyage_class' id='check_sup_voyage_all' type='checkbox'></th>");
+        voyage.append("<th class='manage-column'>Nom du voyage</th>");
+        voyage.append("<th class='manage-column'>Début</th>");
+        voyage.append("<th class='manage-column'>Fin</th>");
+        voyage.append("<th class='manage-column'>Nombre places</th>");
+        voyage.append("<th class='manage-column'>Tarif Adulte</th>");
+        voyage.append("<th class='manage-column'>Tarif Enfant</th>");
+        voyage.append("<th class='manage-column'>Tarif Adhérent</th>");
+        voyage.append("<th class='manage-column'>État</th>");
         /*
         * Remplissage de l'en-tête du tableau des escapades
         */
         jQuery("#les_escapades table").append("<thead><tr></tr></thead>");
-        jQuery("#les_escapades table tr").append("<th  style='width:5%;' class='manage-column'><input class='sup_voyage_class' id='check_sup_voyage_all' type='checkbox'></th>");
-        jQuery("#les_escapades table tr").append("<th class='manage-column'>Nom escapade</th>");
-        jQuery("#les_escapades table tr").append("<th class='manage-column'>Début</th>");
-        jQuery("#les_escapades table tr").append("<th class='manage-column'>Fin</th>");
-        jQuery("#les_escapades table tr").append("<th class='manage-column'>Nombre places</th>");
-        jQuery("#les_escapades table tr").append("<th class='manage-column'>Tarif Adulte</th>");
-        jQuery("#les_escapades table tr").append("<th class='manage-column'>Tarif Enfant</th>");
-        jQuery("#les_escapades table tr").append("<th class='manage-column'>Etat</th>");
+        var escapade = jQuery("#les_escapades table thead tr");
+        escapade.append("<th  style='width:5%;' class='manage-column'><input class='sup_voyage_class' id='check_sup_voyage_all' type='checkbox'></th>");
+        escapade.append("<th class='manage-column'>Nom escapade</th>");
+        escapade.append("<th class='manage-column'>Début</th>");
+        escapade.append("<th class='manage-column'>Fin</th>");
+        escapade.append("<th class='manage-column'>Nombre places</th>");
+        escapade.append("<th class='manage-column'>Tarif Adulte</th>");
+        escapade.append("<th class='manage-column'>Tarif Enfant</th>");
+        escapade.append("<th class='manage-column'>Tarif Adhérent</th>");
+        escapade.append("<th class='manage-column'>État</th>");
         /*
         * Pour chaque Object événement ajout d'une ligne dans le tableau
         *
@@ -109,7 +112,9 @@ var modGetData = (function(){
           ligne.append("<td>"+e.tarifa+"</td>");
           ligne.append("<td>"+e.tarife+"</td>");
           ligne.append("<td>"+e.tarifadh+"</td>");
-          ligne.append("<td class='"+e.etat_resa+"'></td>");
+          var text="";
+          if(e.etat_resa=="ouvert"){text="Ouvert";}else if(e.etat_resa=="cloture"){text="Cloturé";} else if(e.etat_resa=="file_attente"){text="En attente";}
+          ligne.append("<td class='etat_event "+e.etat_resa+"'>"+text+"</td>");
 
         });
         /*
@@ -137,19 +142,18 @@ var modGetData = (function(){
           'get_resas' : true ,
         }
          jQuery.post(ajax_object.ajax_url,data,function (data) {
-           console.log(data);
-        jQuery("#les_resas table").append("<tr></tr>");
+        jQuery("#les_resas table").append("<thead><tr></tr></thead>");
         jQuery("#les_resas table tr").append("<th style='width:5%;' class='manage-column'><input class='sup_resa_class' id='check_sup_resa_all' type='checkbox'></th>");
-        jQuery("#les_resas table tr").append("<th class='manage-column'>Nom Prenom</th>");
-        jQuery("#les_resas table tr").append("<th class='manage-column'>Nom voyage</th>");
-        jQuery("#les_resas table tr").append("<th class='manage-column'>Nombre de places Adulte</th>");
-        jQuery("#les_resas table tr").append("<th class='manage-column'>Nombre de places Enfant</th>");
+        jQuery("#les_resas table tr").append("<th class='manage-column'>NOM Prénom</th>");
+        jQuery("#les_resas table tr").append("<th class='manage-column'>Événement</th>");
+        jQuery("#les_resas table tr").append("<th class='manage-column'>Places Adultes</th>");
+        jQuery("#les_resas table tr").append("<th class='manage-column'>Places Enfants</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Date Réservation</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Prix</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Téléphone</th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>Paiement</th>");
-        jQuery("#les_resas table tr").append("<th class='manage-column'>Prioritaire ?</th>");
-        jQuery("#les_resas table tr").append("<th class='manage-column'>Role</th>");
+        jQuery("#les_resas table tr").append("<th class='manage-column'>Réservé</th>");
+        jQuery("#les_resas table tr").append("<th class='manage-column'>Rôle</th>");
         jQuery.each(data.data,function(i,e){
           var type_evenement = e.category.toLowerCase().substr(0,e.category.toLowerCase().length-1);
           var attente="";
@@ -160,7 +164,8 @@ var modGetData = (function(){
           jQuery("#les_resas table").append("<tr id='reservation"+e.id_resa+"'></tr>");
           var resa = jQuery("#reservation"+e.id_resa);
           resa.append("<td class="+attente+"><input type='checkbox' id='check_sup_resa"+e.id_resa+"' class='sup_resa_class' ></td>");
-          resa.append("<td id='user"+e.id_participant+"'>"+e.display_name+"</td>");
+          var login = (typeof e.user_login=="undefined") ? "" : "</br>"+e.user_login;
+          resa.append("<td id='user"+e.id_participant+"'>"+e.display_name+""+login+"</td>");
           resa.append("<td id='"+type_evenement+""+e.id_evenement+"'>"+e.nom_voyage+"</td>");
           resa.append("<td name='nb_place_resa'>"+e.nbplace+"</td>");
           resa.append("<td name='nbplace_enf_resa'>"+e.nbplace_enf+"</td>");
@@ -184,6 +189,7 @@ var modGetData = (function(){
           else {
             resa.append("<td><input type='checkbox' id='att"+e.id_resa+"' class='att_class' checked ></td>");
           }
+          resa.append("<td class="+e.ext+">"+e.role+"</td>");
             });
       },"json")
     .fail(function() {
@@ -329,7 +335,7 @@ var modGestionCJM = (function(){
     jQuery("#reservation"+res[0]+table_id).children().each(function(i,e)
     {
       var textElement = jQuery(e).html();
-      if(!jQuery(e).children().is("input") && i!=1 && i!=2 && i!=6 && i!=5)
+      if(!jQuery(e).children().is("input") && i!=1 && i!=2 && i!=6 && i!=5 && i!=10)
       {
         var name = jQuery(e).attr('name');
         jQuery(e).html("<input style=\"width:100px;\" name='modif_"+name+"' type='text' value='"+textElement+"'></input>");

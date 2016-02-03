@@ -8,6 +8,10 @@ jQuery(function($){
     * dans la page du plugin en AJAX et traitement en JS pour l'affichage
     */
       var get_param = modGestionCJM.GET();
+      var el = document.getElementById("btn_add_resa");
+      el.onclick = function () {
+        document.getElementById("add_resa_form").style.display='block';
+      };
       /*
       Boutton pour reload les événemnts et les réservations
       */
@@ -36,7 +40,9 @@ jQuery(function($){
       $("#les_voyages").removeClass('voyage_clicked');
       $(this).css('background-color','inherit');
       $("#les_escapades_titre").css('background-color','#e4e4e4');
+      $("#les_mails_titre").css('background-color','#e4e4e4');
       $("#les_escapades").slideUp();
+      $("#les_mails").slideUp();
       $("#les_resas").hide();
       if($("#les_voyages").css('display')=="none")
       {
@@ -51,8 +57,10 @@ jQuery(function($){
 
       $("#les_voyages").removeClass('voyage_clicked');
       $("#les_voyages_titre").css('background-color','#e4e4e4');
+      $("#les_mails_titre").css('background-color','#e4e4e4');
       $(this).css('background-color','inherit');
       $("#les_voyages").slideUp();
+      $("#les_mails").slideUp();
       $("#les_escapades").slideDown();
       $("#les_escapades table tr").show();
       $("#les_escapades h1").html("Les escapades");
@@ -61,11 +69,13 @@ jQuery(function($){
 
     });
     $("#les_mails_titre").click(function () {
+      $(this).css('background-color','inherit');
       if($("#les_mails").css('display')=="none")
       {
         $("#les_mails").slideDown();
         $("#les_voyages").slideUp();
         $("#les_escapades").slideUp();
+        $("#les_resas").slideUp();
       }
       else {
         $("#les_mails").slideUp();
