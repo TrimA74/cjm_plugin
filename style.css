@@ -8,13 +8,9 @@
 }
 
 
-#les_voyages_titre {
+#les_voyages_titre,#les_escapades_titre ,#les_mails_titre {
 	cursor: pointer;
 }
-#les_escapades_titre {
-	cursor: pointer;
-}
-
 .voyage_clicked {
 	background-color: #FFE4B9;
 }
@@ -27,19 +23,57 @@
 .icon-cjm-resa {
 	
 }
-.resa_attente {
-	background-color: #FF4B5C;
+.resa_attente:after {
+	content:'';
+	position: inherit;
+    border-style: solid;
+    border-width: 5px;
+    height: 100%;
+    left: 0;
+    margin-right: 4px;
+    color: orange;
 }
-.resa_attente:hover {
-	background-color: #FB1D32;
+.user_ext:before {
+	content:'';
+	position: inherit;
+    border-style: solid;
+    border-width: 5px;
+    height: 100%;
+    left: 0;
+    margin-right: 4px;
+    color: DodgerBlue;
 }
-.ouvert {
-	background-color: green;
+.ouvert::before, .file_attente::before, .cloture::before {
+	content:'';
+	position: inherit;
+    border-style: solid;
+    border-width: 10px;
+    height: 100%;
+    left: 0;
+    margin-right: 10px;
 }
-
-.file_attente {
-	background-color: orange;
+.ouvert::before {
+	color: #7FDD4C;
 }
-.cloture {
-	background-color: red;
+.file_attente::before {
+	color: orange;
+}
+.cloture::before {
+	color: #C60800;
+}
+.file_attente:hover::before, .cloture:hover::before, .ouvert:hover::before {
+    margin-left: 30px;
+	transition-duration: 0.5s;
+}
+#les_resas td,#les_escapades td,#les_voyages td {
+	border-bottom: 1px solid #e1e1e1;
+}
+#les_resas tr:hover,#les_escapades tr:hover,#les_voyages tr:hover {
+	background-color: #e1e1e1;
+}
+#les_resas th,#les_escapades th,#les_voyages th {
+	font-weight: bold;
+}
+#add_resa_form input, #add_resa_form label {
+    margin-bottom: 4px;
 }

@@ -9,9 +9,10 @@ $(".resa_form").submit(function(){
       $.ajax({
         type : "POST",
         dataType: "json",
-        url : "https://srv-prj.iut-acy.local/jumelage/Best_wordpress_ever/wordpress/wp-content/plugins/cjm/ajaxController.php",
-        data : $(this).serialize(),
+        url : cjm_object.ajax_url,
+        data : $(this).serialize()+"&action=ins_resa",
         success : function(msg){     
+            console.log(msg);
              switch(msg[0]){
              	case 1 : $("#resa_div_id").empty().html("<p>Votre Inscription a bien été prise en compte !</p>").css('color','green');
              	         $("#resa_div_id").css('width','420px');
@@ -39,12 +40,11 @@ $(".resa_form").submit(function(){
 */
 
 $(".annul_resa_form").submit(function(){
-        
       $.ajax({
         type : "POST",
         dataType: "json",
-        url : "https://srv-prj.iut-acy.local/jumelage/Best_wordpress_ever/wordpress/wp-content/plugins/cjm/ajaxController.php",
-        data : $(this).serialize(),
+        url : cjm_object.ajax_url,
+        data : $(this).serialize()+"&action=del_resa",
         success : function(msgd){    
             console.log(msgd);    
              switch(msgd){
@@ -77,14 +77,14 @@ $(".annul_resa_form").submit(function(){
 */
 
   $(".modif_resa_form").submit(function(){
+
         
       $.ajax({
         type : "POST",
         dataType: "json",
-        url : "https://srv-prj.iut-acy.local/jumelage/Best_wordpress_ever/wordpress/wp-content/plugins/cjm/ajaxController.php",
-        data : $(this).serialize(),
-        success : function(upd){  
-        console.log(upd);      
+        url : cjm_object.ajax_url,
+        data : $(this).serialize()+"&action=upd_resa",
+        success : function(upd){   
              switch(upd){
                 
              	case 1 : $("#modif_resa_div").empty().html("<p>Votre réservation a bien été modifiée! </p>").css('color','orange');

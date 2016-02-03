@@ -6,7 +6,6 @@ function get_logged_user_callback() {
   echo json_encode($user);
   wp_die();
 }
-add_action( 'wp_ajax_get_logged_user', 'get_logged_user_callback' );
 add_action( 'wp_ajax_nopriv_get_logged_user', 'get_logged_user_callback');
 
 function get_evenements_callback () {
@@ -49,7 +48,7 @@ function get_resas_callback () {
   global $wpdb;
   if(isset($_POST["get_resas"]))
   {
-    $res = $wpdb->get_results("select r.prix_total,r.date_resa,r.id_evenement,r.id_participant,r.id_resa,r.nbplace,r.nbplace_enf,r.paiement,u.display_name,r.liste_attente from cjm_reservation r
+    $res = $wpdb->get_results("select r.prix_total,r.date_resa,r.id_evenement,r.id_participant,r.id_resa,r.nbplace,r.nbplace_enf,u.user_login,r.paiement,u.display_name,r.liste_attente from cjm_reservation r
     	join cjm_users u on u.ID=r.id_participant
     	order by r.liste_attente asc,u.display_name asc
     	;");
@@ -60,9 +59,23 @@ function get_resas_callback () {
         $value->tel=$tel;
         $cat = get_the_category($value->id_evenement);
         $value->category=$cat[0]->category_nicename;
+        $role = get_user_by('id',$value->id_participant)->roles[0];
+        $value->ext="";
+        if($role=="subscriber")
+        {
+          $value->role="Abonné";
+        }
+        else if ($role=="adherent_user")
+        {
+          $value->role="Adhérent";
+        }
+        else if($role="administrator")
+        {
+          $value->role="Administrateur";
+        }
       }
 
-    	$res_ext = $wpdb->get_results("select prix_total,date_resa,nom as 'display_name',id_resa,tel,nbplace,nbplace_enf,paiement,liste_attente,id_evenement from cjm_reservation_ext
+    	$res_ext = $wpdb->get_results("select role,prix_total,date_resa,nom as 'display_name',id_resa,tel,nbplace,nbplace_enf,paiement,liste_attente,id_evenement from cjm_reservation_ext
     		order by liste_attente asc,nom asc
     		;");
     		foreach ($res_ext as $key => $value) {
@@ -73,6 +86,20 @@ function get_resas_callback () {
           $id_resa = $value->id_resa;
     			$value->id_participant=$id_resa."ext";
           $value->id_resa=$id_resa."ext";
+          $role = $value->role;
+          $value->ext="user_ext";
+          if($role=="adherent")
+          {
+            $value->role="Adhérent";
+          }
+          else if($role=="noadherent")
+          {
+            $value->role="Abonné  ";
+          }
+          else if($role="administrator")
+          {
+            $value->role="Administrateur";
+          }
     		}
 
   echo json_encode(
@@ -355,12 +382,12 @@ function add_resa () {
     {
       $list=1;
     }
-    if($_POST["role"]=="adherent")  {
-        $prix = $_POST["nbplace"] * get_post_meta($_POST["id_evenement"],"_tarif_adherent",true) + $_POST["nbplace_enf"] * get_post_meta($_POST["id_evenement"],"_tarif_enfant",true);
-    }
-    else if($_POST["role"]=="noadherent"){
-      $prix = $_POST["nbplace"] * get_post_meta($_POST["id_evenement"],"_tarif_adulte",true) + $_POST["nbplace_enf"] * get_post_meta($_POST["id_evenement"],"_tarif_enfant",true);
-    }
+    // if($_POST["role"]=="adherent")  {
+    //     $prix = $_POST["nbplace"] * get_post_meta($_POST["id_evenement"],"_tarif_adherent",true) + $_POST["nbplace_enf"] * get_post_meta($_POST["id_evenement"],"_tarif_enfant",true);
+    // }
+    // else if($_POST["role"]=="noadherent"){
+    //   $prix = $_POST["nbplace"] * get_post_meta($_POST["id_evenement"],"_tarif_adulte",true) + $_POST["nbplace_enf"] * get_post_meta($_POST["id_evenement"],"_tarif_enfant",true);
+    // }
     $res= $wpdb->insert(
     cjm_reservation_ext,
     array(
@@ -370,7 +397,7 @@ function add_resa () {
       'nbplace_enf'=> intval($_POST["nbplace_enf"]),
       'paiement' => $paiement,
       'liste_attente' => $list,
-      'prix_total' => $prix,
+      'role' => $_POST["role"],
       'id_evenement' => intval($_POST["id_evenement"]))
     );
     $data = array(
@@ -380,7 +407,7 @@ function add_resa () {
       'nbplace_enf'=> intval($_POST["nbplace_enf"]),
       'paiement' => $_POST["paiement"],
       'attente' => $_POST["liste_attente"],
-      'prix_total' => $prix,
+      'prix_total' => $_POST["role"],
       'id_evenement' => intval($_POST["id_evenement"])
     );
     echo json_encode(array($data,$res));
@@ -390,3 +417,136 @@ function add_resa () {
 }
 
 add_action('wp_ajax_add_resa','add_resa');
+
+
+/* CLIENT GESTION RESERVATIONS */
+
+function ins_resa () {
+  global $wpdb;
+  if(isset($_POST["pl_adulte"]) && isset($_POST["pl_enfant"]) && isset($_POST["post_id"]) )
+  {
+     if(!is_numeric($_POST["post_id"])){
+         $tab = z;
+    }else{
+      if($_POST["pl_adulte"] == 0 && $_POST["pl_enfant"] == 0)
+        $tab[0] = 2;
+      else{
+
+            $post_id = $_POST["post_id"];
+            $current_user = wp_get_current_user();
+            $id_user = $current_user->ID;
+            $user = new WP_User( $id_user );
+            $user_rank =  $user->roles[0];
+
+            $nb_place_total = get_post_meta($post_id,'_nb_place',true);
+            if($user_rank =='adherent_user'){
+                $prix_total = $_POST["pl_adulte"] * get_post_meta($post_id,'_tarif_adherent', true) + $_POST["pl_enfant"] * get_post_meta($post_id,'_tarif_enfant',true);
+            }else{
+              $prix_total = $_POST["pl_adulte"] * get_post_meta($post_id,'_tarif_adulte', true) + $_POST["pl_enfant"] * get_post_meta($post_id,'_tarif_enfant',true);
+            }
+
+            if($nb_place_total < ($_POST["pl_adulte"] + $_POST["pl_enfant"]) && get_post_meta($post_id,'_etat_resa',true) != 'file_attente'){
+              $tab[0] =3;
+            }else{
+
+              if(get_post_meta($post_id,'_etat_resa',true) == 'file_attente'){
+                $bool = 1;
+              }else{
+                $bool = 0;
+              }
+
+             $query =$wpdb->insert( cjm_reservation,
+                      array(
+                              'id_participant' => $id_user,
+                      'id_evenement' => $_POST["post_id"],
+                      'nbplace' => esc_attr($_POST["pl_adulte"]),
+                      'nbplace_enf' => esc_attr($_POST["pl_enfant"]),
+                      'paiement' => 0,
+                      'liste_attente' => $bool
+                       ));
+              $tab[0] = 1;
+            }
+      }
+    }
+    echo json_encode($tab);
+  }
+   wp_die();
+}
+add_action('wp_ajax_ins_resa','ins_resa');
+
+function upd_resa () {
+  global $wpdb;
+  if(isset($_POST["pl_adulte_upd"])  && isset($_POST["pl_enfant_upd"]))
+  {
+    if(!is_numeric($_POST["post_id_upd"])){
+         $upd = z;
+    }else{
+
+        if($_POST["pl_adulte_upd"] == 0 && $_POST["pl_enfant_upd"] == 0){
+          $upd = 2;
+        }else{
+
+
+          $post_id = $_POST["post_id_upd"];
+          $current_user = wp_get_current_user();
+          $id_user = $current_user->ID;
+          $user_rank =  $user->roles[0];
+          $nb_place_total = get_post_meta($post_id,'_nb_place',true);
+          $query2 = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}reservation WHERE id_evenement = $post_id AND id_participant = $id_user");
+          $ancien_nb_place = $query2[0]->nbplace + $query2[0]->nbplace_enf;
+          if($user_rank =='adherent_user'){
+             $prix_total = $_POST["pl_adulte_upd"] * get_post_meta($post_id,'_tarif_adherent', true) + $_POST["pl_enfant_upd"] * get_post_meta($post_id,'_tarif_enfant',true);
+          }else{
+            $prix_total = $_POST["pl_adulte_upd"] * get_post_meta($post_id,'_tarif_adulte', true) + $_POST["pl_enfant_upd"] * get_post_meta($post_id,'_tarif_enfant',true);
+          }
+          if($nb_place_total+$ancien_nb_place < ($_POST["pl_adulte_upd"] + $_POST["pl_enfant_upd"])){
+                $upd = 3;
+          }else{
+            if(get_post_meta($post_id,'_etat_resa',true) == 'file_attente'){
+                      $bool = 1;
+            }else{
+                      $bool = 0;
+            }
+            $query = $wpdb->update( cjm_reservation,
+                    array(
+                            'nbplace' => esc_attr($_POST["pl_adulte_upd"]),
+                            'nbplace_enf' => esc_attr($_POST["pl_enfant_upd"]),
+                            'paiement' => 0,
+                            'prix_total' => $prix_total,
+                            'liste_attente' => $bool
+                    )
+                    ,array( 'id_participant' => $id_user , 'id_evenement' => $_POST["post_id_upd"]));
+              $nb_place_maj = $nb_place_total+$ancien_nb_place - esc_attr($_POST["pl_adulte_upd"]) - esc_attr($_POST["pl_enfant_upd"]);
+            update_post_meta($post_id,'_nb_place',$nb_place_maj);
+            $upd = 1;
+
+          }
+        }
+    }
+    echo json_encode($upd);
+  }
+  wp_die();
+}
+add_action('wp_ajax_upd_resa','upd_resa');
+
+function del_resa () {
+  if(isset($_POST["post_id_annul"]) && !empty($_POST["post_id_annul"]))
+    {
+      if(!is_numeric($_POST["post_id_annul"])){
+         $msgd = z;
+      }else{
+        global $wpdb;
+        $post_id = $_POST["post_id_annul"];
+        $current_user = wp_get_current_user();
+        $id_user = get_current_user_id();
+        $user = new WP_User( $id_user );
+        $nbplace = get_post_meta($post_id,'_nb_place',true);
+        $query = $wpdb->delete( cjm_reservation, array( 'id_participant' => $id_user , 'id_evenement' =>  $post_id));
+        $msgd = 1;
+      }
+
+      echo json_encode($msgd);
+    }
+ wp_die();
+}
+add_action('wp_ajax_del_resa','del_resa');
