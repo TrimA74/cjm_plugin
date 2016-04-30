@@ -11,7 +11,7 @@
     - Création, modification, suppresion d'événement (nombres de places dispos, total, enfant/adultes/adhérent, prix des places, début fin de voyage, 3 états de l'événement Ouvert,File d'attente,Cloturé)</br>
     - Envoies de mail automatique à l'inscription d'un événement, modifiation d'une résevation et quand le chèque de paiement est reçu par le comité. </br>
 </p>
-<h3> • Template de mails modifiable directement sur WordPress avec un l'éditeur wysiwyg</h3>
+<h3> • Template de mails modifiable directement sur WordPress avec l'éditeur wysiwyg</h3>
 ![alt tag](https://raw.githubusercontent.com/TrimA74/cjm_plugin/master/img/screenshots/exemple_mails_resa.PNG)
 
     
