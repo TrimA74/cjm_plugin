@@ -13,17 +13,27 @@ jQuery(function($){
     * Récupérer tous les voyages et toutes les réservations
     * dans la page du plugin en AJAX et traitement en JS pour l'affichage
     */
-      modGetData.get_evenements("Les voyages");
-      add_resa_btn.onclick = function () {
-        document.getElementById("add_resa_form").style.display='block';
-      };
-      /*
-      Boutton pour reload les événemnts et les réservations
-      */
-      jQuery("body").off("click","#reload_all");
-      $("body").on("click","#reload_all",function () {
-        modGestionCJM.reloadData(get_param);
+    document.getElementById("check_all").onclick =  function () {
+      var bool = false ;
+      if(jQuery("#check_all").is(':checked')) {
+        bool = true;
+      }
+      jQuery("#send_email input").each(function(i,e) {
+        jQuery(e).prop('checked', bool);
       });
+    };
+    modGetData.get_evenements("Les voyages");
+    modGetData.get_mails_to_confirm();
+    add_resa_btn.onclick = function () {
+      document.getElementById("add_resa_form").style.display='block';
+    };
+    /*
+    Boutton pour reload les événemnts et les réservations
+    */
+    jQuery("body").off("click","#reload_all");
+    $("body").on("click","#reload_all",function () {
+      modGestionCJM.reloadData(get_param);
+    });
     /*
     * Par défaut les voyages sont affichés dès l'arrivée sur la page 'Gestion des participants'
     */
@@ -78,20 +88,20 @@ jQuery(function($){
     /*
     * Suppression d'un voyage en AJAX
     */
-    $("#app_voyage").click(function() {
-      if($('#voyages_action option:selected').val()=="Supprimer")
-      {
+    $("#btn_sup_voyage").click(function() {
+      // if($('#voyages_action option:selected').val()=="Supprimer")
+      // {
          modGestionCJM.sup_voyage();
-      }
+      // }
     });
      /*
     * Suppression d'une escapade en AJAX
     */
-    $("#app_escapade").click(function() {
-      if($('#escapdes_action option:selected').val()=="Supprimer")
-      {
+    $("#btn_sup_escapade").click(function() {
+      // if($('#escapdes_action option:selected').val()=="Supprimer")
+      // {
          modGestionCJM.sup_escapade();
-      }
+      // }
     });
     /**
     ** Simulation de la suppresion en cachant l'élément supprimer
@@ -102,14 +112,15 @@ jQuery(function($){
         e.hide();
       }
     });
-    $("#send_email_btn").click(function () {
-      modSendEmails.send_mail_confirm_paiement();
-    });
     /*
     * Code exécuter dès que les requêtes AJAX qui récupére les événements sont terminées
     *
     */
     $( document ).ajaxStop(function() {
+      jQuery("body").off("click","#send_email_btn");
+      jQuery("body").on("click","#send_email_btn",function () {
+        modSendEmails.send_mail_confirm_paiement();
+      });
       /*
       Formulaire d'ajout de réservation au voyage cliqué
       */
@@ -136,26 +147,21 @@ jQuery(function($){
         filename: name
         });
       }
-      else if ($("#export_resas option:selected").val()=="PDF") {
-        $('#les_resas table').tableExport({type:'pdf',escape:'false',htmlContent:'false',ignoreColumn: []});
-      }
+      // else if ($("#export_resas option:selected").val()=="PDF") {
+      //   $('#les_resas table').tableExport({type:'pdf',escape:'false',htmlContent:'false',ignoreColumn: []});
+      // }
       });
 
       /*
       * Suppresion ou modification d'une réservaion en AJAX
       */
       jQuery("body").off("click","#app_resa");
-      jQuery("body").on("click","#app_resa",function() {
-        // Suppresion
-        if($("#resa_action option:selected").val()=="Supprimer")
-        {
+      jQuery("body").on("click","#btn_sup_resa",function() {
           modGestionCJM.sup_resa();
-        }
-        // Modification
-        if($("#resa_action option:selected").val()=="Modifier")
-        {
+      });
+      jQuery("body").off("click","#app_resa");
+      jQuery("body").on("click","#btn_modif_resa",function() {
           modGestionCJM.modif_resa();
-        }
       });
       /*
       * Requete AJAX dès que changement sur la checkbox paiement

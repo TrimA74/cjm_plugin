@@ -19,7 +19,7 @@ function enqueuescript_back(){
 				*/
         if($_GET["page"]!="reservation-stats")
         {
-          wp_enqueue_style('style',plugins_url('cjm/style.css'),'2.0');
+          wp_enqueue_style('style',plugins_url('cjm/css/style.css'),'2.0');
         }
 				/*
 				Scipts qui ne sont chargés que sur Réservation
@@ -47,47 +47,125 @@ function enqueuescript_back(){
 	        if($_GET["page"]=="templates-mails")
 	        {
 	          wp_enqueue_script( 'cjm_mails',plugins_url('cjm/js/mails/main.js'),'1.0');
-	          wp_enqueue_style('mail',plugins_url('cjm/mail.css'),'2.0');
+	          wp_enqueue_style('mail',plugins_url('cjm/css/mail.css'),'2.0');
 	        }
 					/*
 					**** Création d'un objet JavaScript global en partie back-office
 					**** @ajax_object --> nom de la variable global
 					**** Exemple en JS : console.log("ajax_object.ajax_url"); Affiche l'url pour faire les appels AJAX sur WordPress
 					*/
-	        wp_localize_script(
-					'cjm_library',
-					'ajax_object',
-	        array(
-						'ajax_url' => admin_url( 'admin-ajax.php' ),
-						 'user' => "true" ));
+	       
 				}
+         wp_localize_script(
+          'cjm_library',
+          'ajax_object',
+          array(
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+             'user' => "true" ));
 
 }
+include_once("functions.php");
 /*
 **** Scripts JS & feuille CSS chargées en front-office
 */
 //scripts js de gestions des forms crud resa
 function enqueuescript_front(){
         wp_enqueue_script( 'cjm_gestion_form_client',plugins_url('cjm/js/cjm_gestion_form_client.js'),'1.0');
-        wp_enqueue_style('style',plugins_url('cjm/style_client.css'),'2.0');
+        wp_enqueue_style('style',plugins_url('cjm/css/style_client.css'),'2.0');
 }
 /*
 **** Modification du type des mails pour le passer en HTML
 */
 add_filter( 'wp_mail_content_type', 'set_content_type' );
 function set_content_type( $content_type ) {return 'text/html';}
+function my_retrieve_password_subject_filter($old_subject)
+
+{
+
+
+
+    $blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+
+    $subject = sprintf( __('[%s] Password Reset'), $blogname );
+
+
+
+    return $subject;
+
+}
+
+
+
+function my_retrieve_password_message_filter($old_message, $key)
+
+{
+
+
+
+    if ( strpos( $_POST['user_login'], '@' ) )
+
+    {
+
+        $user_data = get_user_by( 'email', trim( $_POST['user_login'] ) );
+
+
+
+    }
+
+    else
+
+    {
+
+        $login = trim($_POST['user_login']);
+
+        $user_data = get_user_by('login', $login);
+
+    }
+
+
+
+    $user_login = $user_data->user_login;
+
+
+
+
+
+    $custom = get_option('forgot_mail_cwd');
+
+    $reset_url = network_site_url("wp-login.php?action=rp&key=$key&login=" . rawurlencode($user_login), 'login');
+
+
+
+    $message .= str_replace("%reseturl%",$reset_url,(str_replace("%username%",$user_login,$custom))); //. "\r\n";
+
+
+
+
+
+    return $message;
+
+}
+
+
+
+// To get these filters up and running:
+
+add_filter ( 'retrieve_password_title', 'my_retrieve_password_subject_filter', 10, 1 );
+
+add_filter ( 'retrieve_password_message', 'my_retrieve_password_message_filter', 10, 2 );
+
 /*
 **** Function qui créer les submenus 'Gestion des participants','Statistique','Mails' sur le menu 'Evénements'
 */
 function plugin_setup_menu(){
         add_submenu_page( 'edit.php?post_type=reservation', 'Gestion des participants', 'Gestion des participants', 'manage_options', 'gestion-participants', 'display_cjm_content' );
-        add_submenu_page( 'edit.php?post_type=reservation', 'Statistique', 'Statistique', 'manage_options', 'reservation-stats', 'display_cjm_stats' );
+        add_submenu_page( 'edit.php?post_type=reservation', 'Statistique', 'Statistiques', 'manage_options', 'reservation-stats', 'display_cjm_stats' );
         add_submenu_page( 'edit.php?post_type=reservation', 'Mails', 'Mails', 'manage_options', 'templates-mails', 'display_cjm_mails' );
 	}
 /*
 **** @include Controller AJAX
 */
-include_once("ajaxController.php");
+include_once("ajaxController/ajaxController.php");
 /*
 **** Controller qui mets à jour les templates de mails en BDD
 */
@@ -100,184 +178,7 @@ function prefix_admin_save_email() {
       ),array("id"=>$_POST["id"]));
     header('Location: edit.php?post_type=reservation&page=templates-mails');
 }
-/*
-**** Affichage du contenu dans la page Mails
-*/
-function display_cjm_mails () {
-    /*
-    * Les mails
-    */
-    global $wpdb;
-    $res = $wpdb->get_results("select * from cjm_mail");
-    echo "<h1>Les mails</h1>";
-    foreach ($res as $key => $value) {
-      $mail_message = stripslashes(stripslashes($value->content));
-      $title = stripslashes(stripslashes($value->title));
-      echo "<form method='post' action='admin-post.php?action=save_email'>";
-      echo "<input style='font-size: x-large;' type='text' name='post_title' size='50' value=\"".$value->title."\" id='title".$value->id."' placeholder='Titre'>";
-      wp_editor($mail_message,"mail_content".$value->id,array("wpautop"=>false));
-      echo "<input type=\"hidden\" name=\"id\" value='".$value->id."'>";
-      echo "<input type=\"hidden\" name=\"action\" value=\"save_email\">";
-      submit_button( 'Sauvegarder' ,'primary');
-      echo "</form>";
-    }
-}
-/*
-**** Affichage du contenu dans la page Statistique
-*/
-function display_cjm_stats () {
-  echo "<h1>Stats</h1>";
-  echo "<table id='resas' class='hover row-border' cellspacing='0' width='100%'>
-        <thead>
-            <tr>
-                <th>Nom Prénom</th>
-                <th>Nom Evenement</th>
-                <th>Nombre place</th>
-                <th>Nombre place enfants</th>
-                <th>Prix total</th>
-                <th>Téléphone</th>
-								<th>Paiement</th>
-								<th>Priorité</th>
-                <th>Role</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tfoot>
-            <tr>
-							<th>Nom Prénom</th>
-							<th>Nom Evenement</th>
-							<th>Nombre place</th>
-							<th>Nombre place enfants</th>
-							<th>Prix total</th>
-							<th>Téléphone</th>
-							<th>Paiement</th>
-							<th>Priorité</th>
-              <th>Role</th>
-              <th>Date</th>
-            </tr>
-        </tfoot>
-    </table>";
-}
-/*
-**** Affichage du contenu dans la page Gestion des participants
-*/
-function display_cjm_content() {
-			my_admin_notice("updated","Petite fonction cool :)");
-      echo "<div class='icon-cjm-resa'></div>";
-      echo "<h1 id='master_titre_resa'>Gestions des participants</h1>";
-      echo "<h2 class='nav-tab-wrapper'>";
-      echo "<img id='reload_all' src='../wp-content/plugins/cjm/img/refresh.png' style='cursor:pointer;float:right;margin-right:10px;'></img>";
-      echo "<a id='les_voyages_titre' class='nav-tab'>Les voyages</a>";
-      echo "<a id='les_escapades_titre' class='nav-tab'>Les Escapades</a>";
-      echo "<a id='les_mails_titre' class='nav-tab'>Les Mails</a>";
-      echo "</h2>";
-      /*
-      Les voyages
-      */
-      echo "<div id='les_voyages' style='display:none;'>";
-      echo "<h1>Les Voyages</h1>";
-      echo
-      "<select id='voyages_action'>
-            <option selected=\"selected\">Action</option>
-            <option value=\"Supprimer\">Supprimer</option>
-            <option value=\"Modifier\">Modifier</option>
-      </select>";
-      echo "<input type='submit' class='button action' value='Appliquer' id='app_voyage'>";
-      echo "<table style='border:solid;' class='wp-list-table widefat fixed posts'>";
-      echo "</table>";
-      echo "</div>";
-      /*
-      Les escapades
-      */
-      echo "<div id='les_escapades' style='display:none;'>";
-      echo "<h1>Les Escapades</h1>";
-      echo
-      "<select id='escapdes_action'>
-            <option selected=\"selected\">Action</option>
-            <option value=\"Supprimer\">Supprimer</option>
-            <option value=\"Modifier\">Modifier</option>
-      </select>";
-      echo "<input type='submit' class='button action' value='Appliquer' id='app_escapade'>";
-      echo "<table style='border:solid;' class='wp-list-table widefat fixed posts'>";
-      echo "</table>";
-      echo "</div>";
-      /*
-      Les réservations
-      */
-      echo "<div id='les_resas' style='display:none;'>";
-      echo "<h1>Les Réservations</h1>";
-      echo
-      "<select id='resa_action'>
-            <option selected=\"selected\">Action</option>
-            <option value=\"Supprimer\">Supprimer</option>
-            <option value=\"Modifier\">Modifier</option>
-      </select>";
-      echo "<input type='submit' class='button action' value='Appliquer' id='app_resa'>";
-      echo "<table style='border:solid;' class='wp-list-table widefat fixed posts'>";
-      echo "</table>";
-      echo
-      "<select id='export_resas'>
-            <option  value =\"PDF\" selected=\"selected\">PDF</option>
-            <option value=\"Excel\">Excel</option>
-      </select>";
-      echo "<input type='button' class='button action' value='Exporter' id='btn_export_resa'>";
-      echo "</br><input type='button' class='button action' value='Ajouter une Réservation' id='btn_add_resa'>";
-      echo "<div id='add_resa_form' style='display:none;'>";
-      echo "<h2>Ajouter une réservation</h2>";
-      echo "<input name='add_name' type='text' placeholder='NOM Prénom'></input></br>";
-      echo "<input placeholder='Places adultes' type='number'></input></br>";
-      echo "<input placeholder='Places enfants' type='number'></input></br>";
-      echo "<input name='add_tel' type='text' placeholder='Téléphone'></input></br>";
-      echo "<label>Paiement : </label><input name='add_paiement' type='checkbox'></input></br>";
-      echo "<label>Liste attente : </label><input name='add_list' type='checkbox'></input></br>";
-      echo
-      "<select id='add_role'>
-            <option  value =\"adherent\" selected=\"selected\">Adhérent</option>
-            <option value=\"noadherent\">Non Adhérent</option>
-      </select>";
-      submit_button( 'Enregistrer',"primary","add_resa" );
-      echo "</div>";
-      echo "</div>";
-      /*
-    * Les mails
-    */
-    echo "<div id='les_mails' style='display:none;'>";
-    echo "<h1 onclick='window.location.href=\"&mails=true\"'>Confirmation de paiement</h1>";
-		global $wpdb;
-		$res = $wpdb->get_results("select * from cjm_mail where id=1");
-		$users=$wpdb->get_results("select u.user_login,u.ID,r.id_evenement from cjm_users u
-			join cjm_reservation r on r.id_participant=u.ID
-			where r.paiement=1 and r.mail_confirm=0");
-		foreach ($users as $key => $value) {
-			$value->nom_voyage=get_post_meta($value->id_evenement,"_nom_voyage",true);
-			}
-    	foreach ($res as $key => $value) {
-      $mail_message = stripslashes(stripslashes($value->content));
-      $title = stripslashes(stripslashes($value->title));
-      $id= $value->id;
-      // echo "<form method='post' action='admin-post.php?action=send_email'>";
-      echo "<form id='send_email'>";
-      foreach ($users as $key => $value) {
-        echo "<input type='checkbox' name='users[]' value ='".$value->user_login."&".$value->id_evenement."'>".$value->user_login." de l'événement <strong>".$value->nom_voyage."</strong></input></br>";
-      }
-      echo "<input type=\"hidden\" name=\"action\" value=\"send_email_confirm\">";
-      echo "<input type=\"hidden\" name=\"id\" value='".$id."''>";
-      echo "<input class='button button-primary' type='button' value='Envoyer' id='send_email_btn'></input>";
-      echo "</form>";
-    }
-    echo "<div>";
-}
-/*
-**** @my_admin_notice
-**** Petite Fonction bien cool pour afficher des messages (succès,erreur,informatif) en PHP !
-*/
-function my_admin_notice($class,$message) {
-    echo"<div class=\"$class is-dismissible notice\"> <p>$message</p>
-          <button type='button' class='notice-dismiss'>
-      <span class='screen-reader-text'>Ne pas tenir compte de ce message </span>
-      </button>
-    </div>";
-}
+include_once("views.php");
 /*
 **** Définition du nouveau type de post 'réservation'
 */
@@ -298,7 +199,6 @@ function register_cpt_resa() {
         'parent_item_colon' => _x( 'Evenement parente :', 'reservation' ),
         'menu_name' => _x( 'Evénements', 'reservation' ),
     );
-
     $args = array(
         'labels' => $labels,
         'hierarchical' => false,
@@ -309,7 +209,7 @@ function register_cpt_resa() {
         'show_ui' => true,
         'show_in_menu' => true,
         'menu_position' => 5,
-
+        'menu_icon'=> 'dashicons-palmtree',
         'show_in_nav_menus' => true,
         'publicly_queryable' => true,
         'exclude_from_search' => false,
@@ -376,6 +276,7 @@ function info_crea($post){
 */
 add_action('save_post','save_metabox');
 function save_metabox($post_id){
+	global $wpdb;
   if($_POST["post_type"]!="reservation")
   {
     return;
@@ -390,16 +291,44 @@ function save_metabox($post_id){
   &&isset($_POST['tarif_adherent'])
   &&isset($_POST['tarif_enfant']))
   {
-    update_post_meta($post_id, '_date_debut', $_POST['date_debut']);
+		$tarif_adulte = get_post_meta($post_id,"_tarif_adulte",true);
+		$tarif_enfant = get_post_meta($post_id,"_tarif_enfant",true);
+		$tarif_adherent = get_post_meta($post_id,"_tarif_adherent",true);
+		if($tarif_adulte != $_POST['tarif_adulte'] || $tarif_enfant != $_POST['tarif_enfant'] || $tarif_adherent != $_POST['tarif_adherent'])
+		{
+			update_post_meta($post_id, '_tarif_adulte', $_POST['tarif_adulte']);
+	    update_post_meta($post_id, '_tarif_enfant', $_POST['tarif_enfant']);
+	    update_post_meta($post_id, '_tarif_adherent', $_POST['tarif_adherent']);
+			$select = $wpdb->get_results("select id_resa,nbplace,nbplace_enf,id_participant,mail_confirm from cjm_reservation where id_evenement=".$post_id);
+			foreach ($select as $key => $value) {
+				$user = get_user_by('ID',$value->id_participant);
+				$value->role = $user->roles[0];
+			}
+			$select1 = $wpdb->get_results("select id_resa,nbplace,nbplace_enf,role from cjm_reservation_ext where id_evenement=".$post_id);
+			$select = array_merge($select,$select1);
+			foreach ($select as $key => $value) {
+				if(!is_null($value->mail_confirm))
+				{
+					$query = $wpdb->update("cjm_reservation",
+					array(
+						"prix_total" => getPrixTotal($post_id,$value->nbplace,$value->nbplace_enf,$value->role)
+					),array("id_resa" => $value->id_resa),array("%d"),array('%d'));
+				}
+				else {
+					$query = $wpdb->update("cjm_reservation_ext",
+					array(
+						"prix_total" => getPrixTotal ($post_id,$value->nbplace,$value->nbplace_enf,$value->role)
+					),array("id_resa" => $value->id_resa),array("%d"),array('%d'));
+				}
+
+			}
+		}
+		update_post_meta($post_id, '_date_debut', $_POST['date_debut']);
     update_post_meta($post_id, '_date_fin', $_POST['date_fin']);
     update_metadata ('post', $post_id, '_nb_place', $_POST['nb_place']); // fait la même chose,juste pour le test :)
     update_post_meta($post_id, '_nb_place_total', $_POST['nb_place_total']);
-    update_post_meta($post_id, '_tarif_adulte', $_POST['tarif_adulte']);
-    update_post_meta($post_id, '_tarif_enfant', $_POST['tarif_enfant']);
-    update_post_meta($post_id, '_tarif_adherent', $_POST['tarif_adherent']);
     update_post_meta($post_id, '_nom_voyage', $_POST['nom_voyage']);
     update_post_meta($post_id, '_etat_resa', $_POST['etat_resa']);
-
   }
 }
 /*
@@ -408,4 +337,26 @@ function save_metabox($post_id){
 add_action('admin_init','customize_meta_boxes');
 function customize_meta_boxes() {
      remove_meta_box('postcustom','reservation','normal');
+}
+/*
+Notification quand il y a des mails à envoyer
+*/
+add_filter( 'add_menu_classes', 'add_plugin_bubble_so_17525062');
+
+function add_plugin_bubble_so_17525062( $menu )
+{
+    foreach( $menu as $menu_key => $menu_data )
+    {
+        if( 'edit.php?post_type=reservation' != $menu_data[2] )
+        {
+          continue;
+        }
+        else {
+          global $wpdb;
+          $query = $wpdb->get_results("select count(id_resa) from cjm_reservation where paiement=1 and mail_confirm=0;","ARRAY_N");
+          $pending_count=$query[0][0];
+          $menu[$menu_key][0] .= " <span id='notif_event_admin' class='update-plugins count-$pending_count'><span class='plugin-count'>" . number_format_i18n($pending_count) . '</span></span>';
+         }
+    }
+    return $menu;
 }

@@ -5,6 +5,7 @@
 var modSendEmails = (function () {
   var self = {};
   self.send_mail_confirm_paiement = function (content) {
+    console.log(jQuery("#send_email").serialize());
      jQuery.post(ajax_object.ajax_url,jQuery("#send_email").serialize(),function (data) {
       console.log(data);
           if(data!="false")
@@ -59,6 +60,20 @@ var modGetData = (function(){
       return Promise.resolve(jQuery.post(ajax_object.ajax_url, data,function (data) {
         },"json"));
     };
+    self.get_mails_to_confirm = function () {
+      var data = {
+        'action' : 'get_mails_to_confirm'
+      }
+      jQuery.post(ajax_object.ajax_url,data,function (data) {
+        jQuery.each(data,function(i,e){
+          jQuery("#send_email").append("<input class='checkbox_send_mail' type='checkbox' name='users[]' value ='"+data[i].user_login+"&"+data[i].id_evenement+"'>"+data[i].user_login+" de l'événement <strong>"+data[i].nom_voyage+"</strong></input></br>");
+        });
+        jQuery("#send_email").append("<input type=\"hidden\" name=\"id\" value='"+data[0].ID+"''>");
+        jQuery("#send_email").append("<input type=\"hidden\" name=\"action\" value=\"send_email_confirm\">");
+        jQuery("#send_email").append("<input class='button button-primary' type='button' value='Envoyer' id='send_email_btn'></input>");
+        jQuery("#notif_event_admin span").text(data.length);
+      },"json");
+    }
     /*
     * Fonction qui fait un appel AJAX sur ajaxController.php pour récupérer tous les événéments
     * Param : type (il n'est pas utile pour le moment mais peut permettre de récupérer unique un type de voyage à la fois)
@@ -106,7 +121,7 @@ var modGetData = (function(){
         * Pour chaque Object événement ajout d'une ligne dans le tableau
         *
         */
-        jQuery.each(data,function(i,e){
+        jQuery.each(data.data,function(i,e){
           var type_evenement = e.category.toLowerCase().substr(0,e.category.toLowerCase().length-1);
           jQuery("#les_"+e.category.toLowerCase()+" table").append("<tr id='"+type_evenement+""+e.ID+"'></tr>");
           var ligne = jQuery("#"+type_evenement+""+e.ID);
@@ -127,18 +142,22 @@ var modGetData = (function(){
         *
         */
       },"json")
-      .done(function() {
+      .done(function(data) {
+        if(data.error.value==1){
+          modGestionCJM.admin_notif("error",data.error.message,7000);
+        }
+        else {
         /*
         * Chargement des resas si les événements ont bien été chargés
         */
-         modGetData.get_resas();
-         modGestionCJM.admin_notif("updated","Les réservations et les événements ont bien été chargées",1500);
+        modGetData.get_resas();
+        }
         })
       /*
       * Si la requête ajax échoue, petit alert des familles
       */
       .fail(function() {
-        modGestionCJM.admin_notif("error","Les réservations n'ont pas été chargées.",7000);
+        modGestionCJM.admin_notif("error","Les réservations n'ont pas été chargées.",2000);
         });
     };
     self.get_resas = function () {
@@ -146,7 +165,7 @@ var modGetData = (function(){
           'action' : 'get_resas',
           'get_resas' : true ,
         }
-         jQuery.post(ajax_object.ajax_url,data,function (data) {
+         return Promise.resolve(jQuery.post(ajax_object.ajax_url,data,function (data) {
         jQuery("#les_resas table").append("<thead><tr></tr></thead>");
         jQuery("#les_resas table tr").append("<th style='width:5%;' class='manage-column'><input class='sup_resa_class' id='check_sup_resa_all' type='checkbox'></th>");
         jQuery("#les_resas table tr").append("<th class='manage-column'>NOM Prénom</th>");
@@ -169,15 +188,14 @@ var modGetData = (function(){
           jQuery("#les_resas table").append("<tr id='reservation"+e.id_resa+"'></tr>");
           var resa = jQuery("#reservation"+e.id_resa);
           resa.append("<td class="+attente+"><input type='checkbox' id='check_sup_resa"+e.id_resa+"' class='sup_resa_class' ></td>");
-          var login = (typeof e.user_login=="undefined") ? "" : "</br>"+e.user_login;
-          resa.append("<td id='user"+e.id_participant+"'>"+e.display_name+""+login+"</td>");
+          var login = (typeof e.user_login=="undefined") ? "Pas défini" : e.user_login;
+          resa.append("<td class='tooltip' title='"+login+"' id='user"+e.id_participant+"'>"+e.display_name+"</td>");
           resa.append("<td id='"+type_evenement+""+e.id_evenement+"'>"+e.nom_voyage+"</td>");
           resa.append("<td name='nb_place_resa'>"+e.nbplace+"</td>");
           resa.append("<td name='nbplace_enf_resa'>"+e.nbplace_enf+"</td>");
           resa.append("<td>"+e.date_resa+"</td>");
           var prix_adulte = parseInt(jQuery("#"+type_evenement+""+e.id_evenement).children().eq(5).text());
           var prix_enfant = parseInt(jQuery("#"+type_evenement+""+e.id_evenement).children().eq(6).text());
-          // resa.append("<td>"+String(calcul_prix_resa(parseInt(e.nbplace_enf),parseInt(e.nbplace),parseInt(prix_enfant),parseInt(prix_adulte)))+"</td>");
           resa.append("<td>"+e.prix_total+"</td>");
           resa.append("<td name='tel_resa' style='mso-number-format:\"@\"'>"+e.tel+"</td>");
            if(e.paiement==0)
@@ -195,11 +213,19 @@ var modGetData = (function(){
             resa.append("<td><input type='checkbox' id='att"+e.id_resa+"' class='att_class' checked ></td>");
           }
           resa.append("<td class="+e.ext+">"+e.role+"</td>");
-            });
+        });
       },"json")
     .fail(function() {
       modGestionCJM.admin_notif("error","Les réservations n'ont pas été chargées.",7000);
-      });
+      })
+    .done(function (data) {
+      if(data.error.value==1){
+        modGestionCJM.admin_notif("error",data.error.message,7000);
+      }
+      else {
+        modGestionCJM.admin_notif("updated","Les réservations et les événements ont bien été chargées.",7000);
+      }
+    }));
     };
     self.get_resa_by_voyage = function (id_evenement) {
       var data = {
@@ -241,21 +267,34 @@ var modGestionCJM = (function(){
     jQuery("#les_resas table").html("");
     jQuery("#les_escapades table").html("");
     jQuery("#les_voyages table").html("");
+    jQuery("#send_email").html("");
     if(get_param.post_type=="reservation" && get_param.page=="gestion-participants")
     {
       modGetData.get_evenements("Les voyages");
+      modGetData.get_mails_to_confirm();
     }
     jQuery("#les_resas").hide();
   };
   self.admin_notif = function (class_name,message,duration) {
-      if(jQuery("#messsage_notif").length!=0)
-        jQuery("#messsage_notif").remove();
-      jQuery("#master_titre_resa").after("<div style='display:none;' id='messsage_notif' class=\""+class_name+" is-dismissible notice\"></div>");
-      jQuery("#messsage_notif").prepend("<p>"+message+"</p>");
-      jQuery("#messsage_notif").fadeIn();
-      setTimeout(function(){
-         jQuery("#messsage_notif").fadeOut();
-    }, duration);
+      var div = jQuery("#messsage_notif");
+      if(div.length!=0)
+        div.remove();
+      jQuery("#master_titre_resa").after("<div style='display:none;' id='messsage_notif' class=\""+class_name+" is-dismissible notice\"><button type='button' class='notice-dismiss'><span class='screen-reader-text'>Ne pas tenir compte de ce message </span></button></div>");
+      div = jQuery("#messsage_notif");
+      div.prepend("<p>"+message+"</p>");
+      div.fadeIn();
+      if(class_name=="error")
+      {
+        jQuery("body").off("click",div);
+        jQuery("body").on("click",div, function () {
+          div.fadeOut();
+        });
+      }
+      else {
+        setTimeout(function(){
+           jQuery("#messsage_notif").fadeOut();
+      }, duration);
+      }
   };
   self.add_resa = function () {
     var datatemp = [];
@@ -288,20 +327,22 @@ var modGestionCJM = (function(){
     };
     jQuery.post(ajax_object.ajax_url,data, function (data) {
       data = JSON.parse(data);
+      data = data.data;
+      console.log(data);
       var paiement=''
       var attente='';
       jQuery("#les_resas table").append("<tr id='new_reservation'></tr>");
       var resa = jQuery("#new_reservation");
       resa.append("<td><input type='checkbox' class='sup_resa_class' ></td>");
-      resa.append("<td>"+data[0].nom+"</td>");
+      resa.append("<td>"+data.nom+"</td>");
       resa.append("<td></td>");
-      resa.append("<td name='nb_place_resa'>"+data[0].nbplace+"</td>");
-      resa.append("<td name='nbplace_enf_resa'>"+data[0].nbplace_enf+"</td>");
+      resa.append("<td name='nb_place_resa'>"+data.nbplace_adl+"</td>");
+      resa.append("<td name='nbplace_enf_resa'>"+data.nbplace_enf+"</td>");
       resa.append("<td>"+new Date().toJSON().slice(0,10)+"</td>");
-      resa.append("<td>"+data[0].prix_total+"</td>");
-      resa.append("<td>"+data[0].tel+"</td>");
-      if(data[0].paiement){paiement='checked'};
-      if(data[0].atente){attente='checked'};
+      resa.append("<td>"+data.prix_total+"</td>");
+      resa.append("<td>"+data.tel+"</td>");
+      if(data.paiement){paiement='checked'};
+      if(data.atente){attente='checked'};
       resa.append("<td><input type='checkbox' class='sup_resa_class' "+paiement+"></td>");
       resa.append("<td><input type='checkbox' class='sup_resa_class' "+attente+"></td>");
     });
@@ -324,6 +365,7 @@ var modGestionCJM = (function(){
         })
     .done(function () {
         modGestionCJM.admin_notif("updated","Modification réussie",2000);
+        jQuery("#register_modif_resa").remove();
     });
   };
   self.modif_resa = function () {
@@ -352,9 +394,10 @@ var modGestionCJM = (function(){
       }
 
     });
+
     if(jQuery("#register_modif_resa").length==0)
     {
-      jQuery("<input type='button' value='Enregistrer' class='button action' id='register_modif_resa'>").insertAfter('#app_resa');
+      jQuery("<input type='button' value='Enregistrer' class='button action' id='register_modif_resa'>").insertAfter('#btn_sup_resa');
     }
     jQuery("body").off("click","#register_modif_resa");
     jQuery("body").on("click","#register_modif_resa",function () {
@@ -480,6 +523,7 @@ var modGestionCJM = (function(){
           'table' : table
         }
       jQuery.post(ajax_object.ajax_url,data, function (data) {
+        console.log(data);
       }, "json"
 
     )

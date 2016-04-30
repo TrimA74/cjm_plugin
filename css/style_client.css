@@ -1,0 +1,201 @@
+/*balises titres resa*/
+
+#nb_place_p_id{
+  text-align: center;
+}
+.nb_place_class{
+  font-weight: bold;
+  color : orange;
+}
+/* div annulation reza client */
+
+#annul_resa_div,#modif_resa_div,#resa_div_id{
+  text-align: center;
+  border : 3px solid lightblue;
+  -webkit-border-radius: 28px;
+  -moz-border-radius: 28px;
+  border-radius: 28px;
+  margin : auto;
+  padding : 20px;
+  width : 400px;
+}
+#resa_modif,#btn_voir_reza {
+  border-color: black;
+  color: black;
+}
+.div_modif_resa_form input[type="number"] {
+  width: 60px;
+  text-align: center;
+}
+.div_modif_resa_form input[type="number"]:hover,.div_modif_resa_form input[type="number"]:focus {
+  border-color: lightblue;
+  border-width: 3px;
+}
+#resa_modif:hover,#btn_voir_reza:hover {
+    color: lightblue;
+    border: 2px solid lightblue;
+
+}
+.idtitrenoIns{
+  text-align: center;
+  color: red;
+}
+
+.lbl_resa_div{
+  margin-left : 50px;
+  font-family: Verdana;
+  color:#000;
+}
+/*informations générales sur chaque réservations*/
+.lbl_info_resa, .span_info_resa, h1{
+  font-family: Verdana;
+  color:#000;
+}
+.lbl_info_resa{
+  display: inline-block;
+  width: 350px ;
+  margin-right:75px;
+}
+.span_info_resa{
+  color : orange;
+}
+#titre_info_resa{
+  font-family: Verdana;
+  color: lightblue;
+}
+
+/*.lbl_info_resa{
+  width: 250px;
+}
+.span_info_resa{
+  margin-left: 50px;
+}
+#titre_info_resa{
+  text-align: center;
+}*/
+/* div annulation reza client */
+
+/*#annul_resa_div p {
+	text-align:center;
+}
+
+#annul_resa_div button, #annul_resa_div form{
+	margin-left:40%;
+}
+
+.p_reza{
+  text-align: center;
+}
+#resa_modif{
+  padding: 0.7em 1em;
+    font-size: 1.7rem;
+    font-weight: 400;
+    font-family: "Lato",Helvetica,Arial,sans-serif;
+    text-transform: uppercase;
+    line-height: 1;
+    background: transparent none repeat scroll 0% 0% padding-box;
+    color: black;
+    border: 2px solid black;
+    border-radius: 4px;
+    -webkit-border-radius: 4px;
+    -o-border-radius:  4px;
+    -moz-border-radius:  4px;
+    cursor: pointer;
+}
+#resa_modif:hover {
+    color: lightblue;
+    border: 2px solid lightblue;
+
+}
+.resa_div{
+  border : 2px solid orange;
+  margin : auto;
+  padding : 20px;
+  width : 400px;
+}
+.annul_resa_div{
+  border : 3px solid lightblue;
+  -webkit-border-radius: 28px;
+-moz-border-radius: 28px;
+border-radius: 28px;
+  margin : auto;
+  padding : 20px;
+  width : 400px;
+}
+.resa_div{
+   border : 3px solid lightblue;
+   -webkit-border-radius: 28px;
+   -moz-border-radius: 28px;
+   border-radius: 28px;
+}
+.idtitrenoIns{
+  text-align: center;
+  color: red;
+}
+.div_modif_resa_form{
+  padding: auto;
+}
+.ipt_modif_resa_form{
+  width: 100px;
+  margin: 20px;
+}
+.div2_modif_resa_form{
+  height:20px;
+}
+.ipt_resa_form{
+  margin-left : 120px;
+  margin-top : 50px;
+  padding : 10px;
+}
+
+
+#ipt_sub_modif_reza{
+  margin-left:50px;
+}
+
+
+/* Réza css - Clément incoming */
+/*
+#btn_voir_reza{
+	margin-left:40%;
+}
+
+.div_modif_resa_form input[type="submit"]{
+	display:block;
+	margin-left:45%;
+}
+
+.annul_resa_div{
+	background-color:#D4ECDC;
+	width:80%;
+	border:none;
+	border-radius:0px;
+
+}
+
+.resa_div p, .resa_form{
+		text-align:center;
+
+}
+#resa_div_id{
+	background-color:#D4ECDC;
+	width:80%;
+	border:none;
+	border-radius:0px;
+	
+}
+
+#modif_resa_div{
+	background-color:#D4ECDC;
+	width:80%;
+	border:none;
+	border-radius:0px;
+}
+
+#ipt_sub_modif_reza{
+	margin-left:40%;
+}
+
+.div_modif_resa_form{
+	text-align:center;
+}*/

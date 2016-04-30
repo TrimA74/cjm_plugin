@@ -21,7 +21,7 @@
 }
 
 .icon-cjm-resa {
-	
+
 }
 .resa_attente:after {
 	content:'';
@@ -76,4 +76,31 @@
 }
 #add_resa_form input, #add_resa_form label {
     margin-bottom: 4px;
+}
+
+.tooltip{
+    position: relative;
+}
+.tooltip:hover:after{
+    background: #333;
+    background: rgba(0,0,0,.8);
+    border-radius: 5px;
+    bottom: 36px;
+    color: #fff;
+    content: attr(title);
+    left: 30%;
+    padding: 5px 15px;
+    position: absolute;
+    z-index: 98;
+}
+
+.tooltip:hover:before{
+    border: solid;
+    border-color: #333 transparent;
+    border-width: 6px 6px 0 6px;
+    bottom: 30px;
+    content: "";
+    left: 40%;
+    position: absolute;
+    z-index: 99;
 }

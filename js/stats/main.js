@@ -2,6 +2,7 @@ jQuery(document).ready(function() {
     var data_to_send = {
     'action' : 'get_resas',
     'get_resas' : true ,
+    'is_stat' : true
   }
     jQuery('#resas').DataTable( {
         "language" : {
